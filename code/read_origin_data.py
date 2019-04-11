@@ -36,9 +36,9 @@ def dic_to_row_csr(dic):
             if '1' == cur_attr[index]:
                 row.append(key)
                 col.append(index)
-    data = np.ones(len(row), dtype=np.float32)
+    data = np.ones(len(row), dtype=np.float64)
 
-    return sp.csr_matrix((data, (row, col)), shape=(len(dic), len(dic[0])), dtype=np.float32)
+    return sp.csr_matrix((data, (row, col)), shape=(len(dic), len(dic[0])), dtype=np.float64)
 
     
         
@@ -109,11 +109,11 @@ def read_origin_cc(path, citename, contentname, cate_map):
         undir_row.append(entry_col)
         undir_col.append(entry_row)
 
-        dir_data = np.ones(len(dir_row), dtype=np.float32)
-        undir_data = np.ones(len(undir_row), dtype=np.float32)
+        dir_data = np.ones(len(dir_row), dtype=np.float64)
+        undir_data = np.ones(len(undir_row), dtype=np.float64)
 
-    directed = sp.csr_matrix((dir_data, (dir_row, dir_col)), shape=(length, length), dtype=np.float32)
-    undirected = sp.csr_matrix((undir_data, (undir_row, undir_col)), shape=(length, length), dtype=np.float32 )
+    directed = sp.csr_matrix((dir_data, (dir_row, dir_col)), shape=(length, length), dtype=np.float64)
+    undirected = sp.csr_matrix((undir_data, (undir_row, undir_col)), shape=(length, length), dtype=np.float64 )
 
     attr_reader.close()
     graph_reader.close()
@@ -195,7 +195,7 @@ def read_origin_pubmed(path, directedname, nodename):
             content_col.append(col)
             content_data.append(float(element[1]))
     content = sp.csr_matrix((content_data, (content_row, content_col)), 
-            shape=(content_row_len, content_col_len), dtype=np.float32)
+            shape=(content_row_len, content_col_len), dtype=np.float64)
 
     #Read cite data, create sparse matrix
     undir_row = []
@@ -229,8 +229,8 @@ def read_origin_pubmed(path, directedname, nodename):
         undir_data.append(1)
         undir_data.append(1)
     
-    directed = sp.csr_matrix((dir_data, (dir_row, dir_col)), shape=(length, length), dtype=np.float32)
-    undirected = sp.csr_matrix((undir_data, (undir_row, undir_col)), shape=(length, length), dtype=np.float32 )
+    directed = sp.csr_matrix((dir_data, (dir_row, dir_col)), shape=(length, length), dtype=np.float64)
+    undirected = sp.csr_matrix((undir_data, (undir_row, undir_col)), shape=(length, length), dtype=np.float64 )
     
 
     return directed, undirected, content, cate
@@ -249,17 +249,17 @@ def run_main():
     pubmed_content_name = 'Pubmed-Diabetes.NODE.paper.tab'
 
     #Path to save files
-    citeseer_save_path = '../processed_data/primary'
+    citeseer_save_path = '../processed_data'
     citeseer_directed = 'citeseer_directed'
     citeseer_undirected = 'citeseer_undirected'
     citeseer_attribute = 'citeseer_attribute'
     citeseer_cate = 'citeseer_cate'
-    cora_save_path =  '../processed_data/primary'
+    cora_save_path =  '../processed_data'
     cora_directed = 'cora_directed'
     cora_undirected = 'cora_undirected'
     cora_attribute = 'cora_attirbute'
     cora_cate = 'cora_cate'
-    pubmed_save_path =  '../processed_data/primary'
+    pubmed_save_path =  '../processed_data'
     pubmed_directed = 'pubmed_directed'
     pubmed_undirected = 'pubmed_undirected'
     pubmed_attribute = 'pubmed_attribute'
