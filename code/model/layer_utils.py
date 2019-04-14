@@ -1,5 +1,12 @@
 import tensorflow as tf
 
+def dropout_sparse(x, keep_prob):
+    '''
+    Do dropout for sparse tensors
+
+    '''
+
+
 def graph_conv(X, A, weights, x_is_sparse = False, a_is_sparse = False):
     '''
     Graph convolution:

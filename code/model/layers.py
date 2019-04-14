@@ -14,6 +14,9 @@ class BaseLayer(object):
         self.name = name
         self.activation = activation
 
+	self.weights = None
+	self.bias = None
+
         #If dropout_prob is assigned a value
         if not dropout_prob:
             #Check if the type of dropout_prob is legal
@@ -46,10 +49,11 @@ class GraphConvLayer(BaseLayer):
     Semi-Supervised Classfication with Graph Convolution Networks, Kipf
     Model:
     	Z = f(X, A) = softmax(A RELU(AXW(0))W(1))
-	A = D^-0.5 A D^-0.5 (Renomalized Laplacian)
+	A = D^-0.5 L D^-0.5 (Renomalized Laplacian)
     NOTE: There is no bias or dropout in the orgin model
     '''
     def __init__(self,
+		 A, W,
                  input_shape, output_shape,
                  activation,
                  name,
@@ -66,7 +70,22 @@ class GraphConvLayer(BaseLayer):
                                             )
         
         #Define layers' variable
-        with tf.variable_scope(self.name + '_var')
+	with tf.variable_scope(self.name + '_var'):
+	    self.weights = glorot_init([input_dim, output_dim], name = 'weights')
+	    
+	    #If bias is used
+	    if self.bias:
+		self.bias = zeros_inin([output_dim], name = 'bias')
     
-    def run(self)
+    def run(self, inputs):
+        
+        #Do drouput
+        if self.sparse:
+            inputs = sparse_dropout(inputs, 1 - self.droupout_prob)
+        else:
+            x = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+        
+        #Do convolution
+        
+
 
