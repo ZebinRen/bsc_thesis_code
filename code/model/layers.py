@@ -1,4 +1,5 @@
 import tensorflow as tf
+from layer_utils import *
 
 class BaseLayer(object):
     def __init__(self,
@@ -6,7 +7,7 @@ class BaseLayer(object):
                  activation,
                  name,
                  dropout_prob = None,
-                 bais = False,
+                 bias = False,
                  sparse = False
                  ):
         #Initialize some variables
@@ -32,8 +33,40 @@ class BaseLayer(object):
         else:
             self.dropout_prob = None
         
-        #Create variables
-        with tf.variable_scope(self.name):
+        
     
     def run(self, inputs):
+        '''
+        '''
+        raise NotImplementedError
+
+class GraphConvLayer(BaseLayer):
+    '''
+    Two layer GCN
+    Semi-Supervised Classfication with Graph Convolution Networks, Kipf
+    Model:
+    	Z = f(X, A) = softmax(A RELU(AXW(0))W(1))
+	A = D^-0.5 A D^-0.5 (Renomalized Laplacian)
+    NOTE: There is no bias or dropout in the orgin model
+    '''
+    def __init__(self,
+                 input_shape, output_shape,
+                 activation,
+                 name,
+                 dropout_prob = None,
+                 bias = False,
+                 sparse = False):
+        super(GraphConvLayer, self).__init__(
+                                            input_shape, output_shape,
+                                            activation,
+                                            name,
+                                            dropout_prob,
+                                            bias,
+                                            sparse
+                                            )
+        
+        #Define layers' variable
+        with tf.variable_scope(self.name + '_var')
+    
+    def run(self)
 
