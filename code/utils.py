@@ -12,7 +12,10 @@ def symmetric_normalized_Laplacian():
     '''
 
 
-def 
+def row_normalized():
+    '''
+    row normalized feature
+    '''
 
 
 

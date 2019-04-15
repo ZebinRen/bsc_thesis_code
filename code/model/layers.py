@@ -14,8 +14,6 @@ class BaseLayer(object):
         self.name = name
         self.activation = activation
 
-	self.weights = None
-	self.bias = None
 
         #If dropout_prob is assigned a value
         if not dropout_prob:
@@ -50,10 +48,12 @@ class GraphConvLayer(BaseLayer):
     Model:
     	Z = f(X, A) = softmax(A RELU(AXW(0))W(1))
 	A = D^-0.5 L D^-0.5 (Renomalized Laplacian)
+    X is the feature matrix
     NOTE: There is no bias or dropout in the orgin model
+    
     '''
     def __init__(self,
-		 A, W,
+		 A, X
                  input_shape, output_shape,
                  activation,
                  name,
@@ -68,6 +68,8 @@ class GraphConvLayer(BaseLayer):
                                             bias,
                                             sparse
                                             )
+	self.inputs = X
+	self.adjancy = A
         
         #Define layers' variable
 	with tf.variable_scope(self.name + '_var'):
@@ -78,14 +80,27 @@ class GraphConvLayer(BaseLayer):
 		self.bias = zeros_inin([output_dim], name = 'bias')
     
     def run(self, inputs):
-        
-        #Do drouput
-        if self.sparse:
-            inputs = sparse_dropout(inputs, 1 - self.droupout_prob)
-        else:
-            x = tf.nn.dropout(inputs, 1 - self.dropout_prob)
-        
+        '''
+	Inputs are features, Since the feateure map will change through the network
+	The symmertic normalized Laplacian matrix at the first layer
+	Then the convoluted matrix in the following layers
+	'''
+        if !self.dropout
+	    if self.sparse:
+                inputs = sparse_dropout(inputs, 1 - self.droupout_prob)
+            else:
+		x = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+		
         #Do convolution
+        graph_conv(inputs, 'Adjancy_matrix_fill_it_later', self.weights, True)
+
+        #bias
+        if self.bias != None:
+            output += self.bias
+
+        #activation
+        return self.activation(output)
+
         
 
 

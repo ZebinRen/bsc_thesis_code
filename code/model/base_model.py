@@ -17,6 +17,12 @@ class BaseModel(object):
         self.name = name
         self.dataset = dataset
 
+        self.inputs = None
+        self.outputs = None
+
+        self.optimizer = None
+
+
     def _add_layers(self):
         '''
         Create layers
@@ -38,6 +44,11 @@ class BaseModel(object):
         # Create layers, in variable scope: name
         with tf.variable_scope(self.name):
             self._add_layers()
+
+        variables = tf.get_collection(tf.GraphKeys)
+
+    def train(self,)
+    	pass
     
     def draw_graph(self, path, file_name):
         '''
