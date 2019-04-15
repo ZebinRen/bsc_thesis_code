@@ -3,8 +3,8 @@ from layer_utils import *
 
 class BaseLayer(object):
     def __init__(self,
-                 input_shape, output_shape,
-                 activation,
+                 input_dim, output_dim,
+                 activation_func,
                  name,
                  dropout_prob = None,
                  bias = False,
@@ -12,7 +12,7 @@ class BaseLayer(object):
                  ):
         #Initialize some variables
         self.name = name
-        self.activation = activation
+        self.activation_func = activation_func
 
 
         #If dropout_prob is assigned a value
@@ -53,23 +53,22 @@ class GraphConvLayer(BaseLayer):
     
     '''
     def __init__(self,
-		 A, X
-                 input_shape, output_shape,
-                 activation,
+                 adjancy,
+                 input_dim, output_dim,
+                 activation_func,
                  name,
                  dropout_prob = None,
                  bias = False,
                  sparse = False):
         super(GraphConvLayer, self).__init__(
-                                            input_shape, output_shape,
-                                            activation,
+                                            input_dim, output_dim,
+                                            activation_func,
                                             name,
                                             dropout_prob,
                                             bias,
                                             sparse
                                             )
-	self.inputs = X
-	self.adjancy = A
+        self.adjancy = adjancy
         
         #Define layers' variable
 	with tf.variable_scope(self.name + '_var'):
@@ -85,21 +84,21 @@ class GraphConvLayer(BaseLayer):
 	The symmertic normalized Laplacian matrix at the first layer
 	Then the convoluted matrix in the following layers
 	'''
-        if !self.dropout
+        if not self.dropout
 	    if self.sparse:
                 inputs = sparse_dropout(inputs, 1 - self.droupout_prob)
             else:
 		x = tf.nn.dropout(inputs, 1 - self.dropout_prob)
 		
         #Do convolution
-        graph_conv(inputs, 'Adjancy_matrix_fill_it_later', self.weights, True)
+        graph_conv(inputs, self.adjancy, self.weights, True)
 
         #bias
         if self.bias != None:
             output += self.bias
 
         #activation
-        return self.activation(output)
+        return self.activation_func(output)
 
         
 
