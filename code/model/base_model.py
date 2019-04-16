@@ -8,6 +8,8 @@ class BaseModel(object):
     def __init__(self, 
                  hidden_num, hidden_dim,
                  input_dim, output_dim,
+                 learning_rate, epochs,
+                 weight_decay, early_stopping,
                  name):
         '''
         Create model
@@ -18,6 +20,12 @@ class BaseModel(object):
             exit()
     
         self.name = name
+
+        #Here are some parameters for training
+        self.learning_rate = learning_rate
+        self.epochs = epochs
+        self.weight_decay = weight_decay
+        self.early_stopping = early_stopping
 
         #A list of layers in the model
         self.layers = []
@@ -78,7 +86,7 @@ class BaseModel(object):
 
         variables = tf.get_collection(tf.GraphKeys)
 
-        loss = _loss()
+        self.loss = _loss()
 
     def train(self,)
     	pass

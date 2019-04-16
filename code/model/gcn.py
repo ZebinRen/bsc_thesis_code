@@ -7,6 +7,8 @@ class GCN(Model):
 				 hidden_num, hidden_dim,
 				 input_dim, output_dim,
 				 total_nodes, total_cates,
+				 learning_rate, epochs,
+         weight_decay, early_stopping,
 				 activation_func, 
 				 dropout_prob,
 				 bias,
@@ -14,13 +16,15 @@ class GCN(Model):
         super(GCN, self).__init__(
 						hidden_num, hidden_dim,
 						input_dim, output_dim,
+						leaning_rate, epochs,
+						weight_decay, early_stopping,
 						name)
 
-		self.total_nodes = total_nodes
-		self.total_cates = total_cates
-		self.activation_func = activation_func
-		self.dropout_prob = dropout_prob
-		self.bias = bias
+		    self.total_nodes = total_nodes
+		    self.total_cates = total_cates
+		    self.activation_func = activation_func
+		    self.dropout_prob = dropout_prob
+		    self.bias = bias
 	
 		#Add placeholders
 		#Note, this dictionary is used to create feed dicts
@@ -56,10 +60,10 @@ class GCN(Model):
 							   sparse = sparse_input)
 			)
 	
-	def _loss(self):
+	  def _loss(self):
 
 	
-	def train(self)
+	  def train(self)
 		
 
     

@@ -57,6 +57,8 @@ def read_origin_cc(path, citename, contentname, cate_map):
     cate = {}
     #a list of id
     id_list = []
+    #save the information of dataset
+    info = {}
 
     #read id, arrtibute and cate
     for line in attr_reader:
@@ -74,6 +76,8 @@ def read_origin_cc(path, citename, contentname, cate_map):
     new_attr = {}
     new_cate = {}
     length = len(id_list)
+    info['node_num'] = length
+    info['cate_num'] = len(cate_map)
 
     for old_id in id_list:
         new_attr[id_map[old_id]] = attr[old_id]
@@ -109,8 +113,17 @@ def read_origin_cc(path, citename, contentname, cate_map):
         undir_row.append(entry_col)
         undir_col.append(entry_row)
 
-        dir_data = np.ones(len(dir_row), dtype=np.float64)
-        undir_data = np.ones(len(undir_row), dtype=np.float64)
+
+    #Add self-loop
+    for i in range(length):
+        dir_row.append(i)
+        dir_col.append(i)
+        undir_row.append(i)
+        undir_col.append(i)
+
+
+    dir_data = [1] * len(dir_row)
+    undir_data = [1] * len(undir_row)
 
     directed = sp.csr_matrix((dir_data, (dir_row, dir_col)), shape=(length, length), dtype=np.float64)
     undirected = sp.csr_matrix((undir_data, (undir_row, undir_col)), shape=(length, length), dtype=np.float64 )
@@ -119,7 +132,7 @@ def read_origin_cc(path, citename, contentname, cate_map):
     graph_reader.close()
     attr = dic_to_row_csr(attr)
 
-    return directed, undirected, attr, cate
+    return directed, undirected, attr, cate, info
 
 
 
@@ -157,12 +170,14 @@ def read_origin_pubmed(path, directedname, nodename):
     attr_list = []
     id_list = []
     cate = {}
+    info = {}
+
     for line in node_reader:
         line = line.strip()
         line = line.split('\t')
         
         id = line[0]
-        cate[id] = int((line[1].split('='))[1])
+        cate[id] = int((line[1].split('='))[1]) - 1
         id_list.append(id)
 
         attr_list.append(line)
@@ -171,9 +186,12 @@ def read_origin_pubmed(path, directedname, nodename):
     node_number = len(id_list)
     new_id = parse_id(id_list)
     length = len(id_list)
+    info['node_num'] = length
+    info['cate_num'] = 3
 
     #change the id-cate map to new id
     new_cate = {}
+
     for id in id_list:
         new_cate[new_id[id]] = cate[id]
     cate = new_cate
@@ -229,11 +247,25 @@ def read_origin_pubmed(path, directedname, nodename):
         undir_data.append(1)
         undir_data.append(1)
     
+    #Add self_loop
+    for i in range(length):
+        #Add edge
+        dir_row.append(i)
+        dir_col.append(i)
+        undir_row.append(i)
+        undir_col.append(i)
+
+        #Add edge
+        dir_data.append(1)
+        undir_data.append(1)
+
+        
+    
     directed = sp.csr_matrix((dir_data, (dir_row, dir_col)), shape=(length, length), dtype=np.float64)
     undirected = sp.csr_matrix((undir_data, (undir_row, undir_col)), shape=(length, length), dtype=np.float64 )
     
 
-    return directed, undirected, content, cate
+    return directed, undirected, content, cate, info
 
     
 def run_main():
@@ -254,32 +286,38 @@ def run_main():
     citeseer_undirected = 'citeseer_undirected'
     citeseer_attribute = 'citeseer_attribute'
     citeseer_cate = 'citeseer_cate'
+    citeseer_info = 'citeseer_info'
     cora_save_path =  '../processed_data'
     cora_directed = 'cora_directed'
     cora_undirected = 'cora_undirected'
-    cora_attribute = 'cora_attirbute'
+    cora_attribute = 'cora_attribute'
     cora_cate = 'cora_cate'
+    cora_info = 'cora_info'
     pubmed_save_path =  '../processed_data'
     pubmed_directed = 'pubmed_directed'
     pubmed_undirected = 'pubmed_undirected'
     pubmed_attribute = 'pubmed_attribute'
-    pubmed_cate ='pubmed_cate'
+    pubmed_cate = 'pubmed_cate'
+    pubmed_info = 'pubmed_info'
 
     #Open_write_file
     citeseer_directed_w = open(os.path.join(citeseer_save_path, citeseer_directed), 'wb')
     citeseer_undirected_w = open(os.path.join(citeseer_save_path, citeseer_undirected), 'wb')
     citeseer_attribute_w = open(os.path.join(citeseer_save_path, citeseer_attribute), 'wb')
     citeseer_cate_w = open(os.path.join(citeseer_save_path, citeseer_cate), 'wb')
+    citeseer_info_w = open(os.path.join(citeseer_save_path, citeseer_info), 'wb')
 
     cora_directed_w = open(os.path.join(cora_save_path, cora_directed), 'wb')
     cora_undirected_w = open(os.path.join(cora_save_path, cora_undirected), 'wb')
     cora_attribute_w = open(os.path.join(cora_save_path, cora_attribute), 'wb')
     cora_cate_w = open(os.path.join(cora_save_path, cora_cate), 'wb')
+    cora_info_w = open(os.path.join(cora_save_path, cora_info), 'wb')
 
     pubmed_directed_w = open(os.path.join(pubmed_save_path, pubmed_directed), 'wb')
     pubmed_undirected_w = open(os.path.join(pubmed_save_path, pubmed_undirected), 'wb')
     pubmed_attribute_w = open(os.path.join(pubmed_save_path, pubmed_attribute), 'wb')
     pubmed_cate_w = open(os.path.join(pubmed_save_path, pubmed_cate), 'wb')
+    pubmed_info_w = open(os.path.join(pubmed_save_path, pubmed_info), 'wb')
     
 
     cate_map_citeseer= {
@@ -292,16 +330,16 @@ def run_main():
     }
 
     #read citeseer
-    cite_d, cite_un, cite_attr, cite_cate = read_origin_cc(citeseer_path, citeseer_cite_name,
+    cite_d, cite_un, cite_attr, cite_cate, cite_info = read_origin_cc(citeseer_path, citeseer_cite_name,
             citeseer_content_name, cate_map_citeseer)
 
     
     #read cora
-    cora_d, cora_un, cora_attr, cora_cate = read_origin_cc(cora_path, cora_cite_name, 
+    cora_d, cora_un, cora_attr, cora_cate, cora_info = read_origin_cc(cora_path, cora_cite_name, 
             cora_content_name, cate_map_cora)
 
     #read pubmed
-    pubmed_d, pubmed_un, pubmed_attr, pubmend_cate = read_origin_pubmed(pubmed_path, 
+    pubmed_d, pubmed_un, pubmed_attr, pubmed_cate, pubmed_info = read_origin_pubmed(pubmed_path, 
             pubmed_cite_name, pubmed_content_name)
 
     #Save to file
@@ -309,35 +347,40 @@ def run_main():
     pickle.dump(cite_un, citeseer_undirected_w)
     pickle.dump(cite_attr, citeseer_attribute_w)
     pickle.dump(cite_cate, citeseer_cate_w)
+    pickle.dump(cite_info, citeseer_info_w)
 
     
     pickle.dump(cora_d, cora_directed_w)
     pickle.dump(cora_un, cora_undirected_w)
     pickle.dump(cora_attr, cora_attribute_w)
     pickle.dump(cora_cate, cora_cate_w)
+    pickle.dump(cora_info, cora_info_w)
 
     pickle.dump(pubmed_d, pubmed_directed_w)
     pickle.dump(pubmed_un, pubmed_undirected_w)
     pickle.dump(pubmed_attr, pubmed_attribute_w)
     pickle.dump(pubmed_cate, pubmed_cate_w)
+    pickle.dump(pubmed_info, pubmed_info_w)
 
     citeseer_directed_w.close()
     citeseer_undirected_w.close()
     citeseer_attribute_w.close()
     citeseer_cate_w.close()
-
+    citeseer_info_w.close()
 
     cora_directed_w.close()
     cora_undirected_w.close()
     cora_attribute_w.close()
     cora_cate_w.close()
+    cora_info_w.close()
 
     pubmed_directed_w.close()
     pubmed_undirected_w.close()
     pubmed_attribute_w.close()
     pubmed_cate_w.close()
+    pubmed_info_w.close()
 
-    return cite_d, cite_un, cite_attr, cite_cate 
+    return cite_d, cite_un, cite_attr, cite_cate, cite_info 
 
 if __name__ == '__main__':
     run_main()

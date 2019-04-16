@@ -71,12 +71,12 @@ class GraphConvLayer(BaseLayer):
         self.adjancy = adjancy
         
         #Define layers' variable
-	with tf.variable_scope(self.name + '_var'):
-	    self.weights = glorot_init([input_dim, output_dim], name = 'weights')
+	    with tf.variable_scope(self.name + '_var'):
+	        self.weights = glorot_init([input_dim, output_dim], name = 'weights')
 	    
 	    #If bias is used
-	    if self.bias:
-		self.bias = zeros_inin([output_dim], name = 'bias')
+	        if self.bias:
+		        self.bias = zeros_inin([output_dim], name = 'bias')
     
     def run(self, inputs):
         '''
