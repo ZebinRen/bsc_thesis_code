@@ -76,8 +76,6 @@ def read_origin_cc(path, citename, contentname, cate_map):
     new_attr = {}
     new_cate = {}
     length = len(id_list)
-    info['node_num'] = length
-    info['cate_num'] = len(cate_map)
 
     for old_id in id_list:
         new_attr[id_map[old_id]] = attr[old_id]
@@ -131,6 +129,9 @@ def read_origin_cc(path, citename, contentname, cate_map):
     attr_reader.close()
     graph_reader.close()
     attr = dic_to_row_csr(attr)
+
+    info['node_num'] = len(cate)
+    info['cate_num'] = len(cate_map)
 
     return directed, undirected, attr, cate, info
 
@@ -186,8 +187,7 @@ def read_origin_pubmed(path, directedname, nodename):
     node_number = len(id_list)
     new_id = parse_id(id_list)
     length = len(id_list)
-    info['node_num'] = length
-    info['cate_num'] = 3
+
 
     #change the id-cate map to new id
     new_cate = {}
@@ -264,6 +264,8 @@ def read_origin_pubmed(path, directedname, nodename):
     directed = sp.csr_matrix((dir_data, (dir_row, dir_col)), shape=(length, length), dtype=np.float64)
     undirected = sp.csr_matrix((undir_data, (undir_row, undir_col)), shape=(length, length), dtype=np.float64 )
     
+    info['node_num'] = len(cate)
+    info['cate_num'] = 3
 
     return directed, undirected, content, cate, info
 

@@ -26,6 +26,7 @@ def read_origin_data(read_path, dataset):
     for name in name_list:
         read_file = open(os.path.join(read_path, dataset+name), 'rb')
         data.append(pickle.load(read_file))
+        read_file.close()
     
     return data[0] , data[1], data[2], data[3], data[4]
 
@@ -189,15 +190,4 @@ def create_dataset(read_path, save_path, instance_num):
 
 if __name__ == '__main__':
     create_dataset('../processed_data', './data', 2)
-
-
-
-    
-
-
-
-
-
-
-
 
