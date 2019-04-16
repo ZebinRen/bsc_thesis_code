@@ -39,6 +39,8 @@ class BaseModel(object):
         self.hidden_dim = [input_dim] + self.hidden_dim
         self.hidden_dim.append(self.output_dim)
 
+        #variables used in the model
+        self.vars = {}
         #This is a list of outputs of each layers
         self.activations = []
 
@@ -82,9 +84,9 @@ class BaseModel(object):
         #output is the last layer's output
         self.outputs = self.activations[-1]
         
-        
-
-        variables = tf.get_collection(tf.GraphKeys)
+        #Get variables
+        variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.name)
+        #Get variable dictionary
 
         self.loss = _loss()
 
@@ -94,8 +96,8 @@ class BaseModel(object):
     def draw_graph(self, path, file_name):
         '''
         Use tensorboard to draw the graph
-        '''        
-
+        '''
+        pass
 
     
     

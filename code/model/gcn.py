@@ -51,13 +51,13 @@ class GCN(Model):
 				sparse_input = False
 			#each layer has a variable scope
 			self.layers.append(
-				GraphConvLayer(self.adjancy,
-							   self.hidden_dim[i], self.hidden_dim[i+1],
-							   self.activation_func,
-							   '_GCL_' + str(i),
-							   self.dropout_prob,
-							   self.bias,
-							   sparse = sparse_input)
+				  GraphConvLayer(self.adjancy,
+							           self.hidden_dim[i], self.hidden_dim[i+1],
+							           self.activation_func,
+							           '_GCL_' + str(i),
+							           self.dropout_prob,
+							           self.bias,
+							           sparse = sparse_input)
 			)
 	
 	  def _loss(self):

@@ -33,8 +33,11 @@ class BaseLayer(object):
 
         else:
             self.dropout_prob = None
-        
-        
+
+    #This function is invocked by the object name
+    def __call__(self, inputs):
+        with tf.name_scope(self.name)   
+            return run(inputs)
     
     def run(self, inputs):
         '''
@@ -79,7 +82,7 @@ class GraphConvLayer(BaseLayer):
 		        self.bias = zeros_inin([output_dim], name = 'bias')
     
     def run(self, inputs):
-        '''
+    '''
 	Inputs are features, Since the feateure map will change through the network
 	The symmertic normalized Laplacian matrix at the first layer
 	Then the convoluted matrix in the following layers
