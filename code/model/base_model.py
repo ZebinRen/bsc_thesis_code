@@ -47,7 +47,7 @@ class BaseModel(object):
         self.inputs = None
         self.outputs = None
 
-        self.loss = 0
+        self.loss = None
 
         self.optimizer = None
 
@@ -79,7 +79,7 @@ class BaseModel(object):
         self.activations.append(input)
         for each_layer in self.layers:
             #The input is the output of the previous layer
-            act = layer(self.activation[-1])
+            act = each_layer(self.activation[-1])
             self.activations.append(act)
         #output is the last layer's output
         self.outputs = self.activations[-1]
@@ -90,8 +90,17 @@ class BaseModel(object):
 
         self.loss = _loss()
 
-    def train(self,)
+    def train(self):
+        '''
+        Train the model
+        '''
     	pass
+    
+    def test(self):
+        '''
+        Test the model
+        '''
+    
     
     def draw_graph(self, path, file_name):
         '''
