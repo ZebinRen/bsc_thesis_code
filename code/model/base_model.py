@@ -96,17 +96,18 @@ class BaseModel(object):
         '''
     	pass
     
-    def test(self):
+    def predict(self, sess):
         '''
-        Test the model
+        predict the model
         '''
+
     
     
     def draw_graph(self, path, file_name):
         '''
         Use tensorboard to draw the graph
         '''
-        pass
+        
 
     
     

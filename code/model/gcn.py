@@ -83,7 +83,32 @@ class GCN(Model):
         }
         
         sess.run(tf.global_variables_initializer())
-        loss = sess.run(model.loss, feed_dict=feed_dict)
+
+        #Train precedure
+        for epoch in self.epochs:
+
+            loss = sess.run(self.loss, feed_dict=feed_dict)
+            loss_list.append(loss)
+
+            #Test early stopping
+
+    
+
+    def predict(self, sess, adj, features, label, mask):
+        feed_dict = {
+            self.adjancy: adj,
+            self.features: inputs,
+            self.label: label,
+            self.mask: mask
+        }
+
+        outputs = sess.run(self.outputs, feed_dict=feed_dict)
+        
+        #mask
+        mask = tf.cast(mask, dtype=tf.float32)
+        outputs = mask * outputs
+
+        return outputs
 
 
 

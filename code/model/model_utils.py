@@ -15,4 +15,23 @@ def masked_softmax_cross_entropy(predict, label, mask):
     loss = tf.reduce_mean(loss)
 
     return loss
+
+def masked_accuracy(predict, label, mask):
+    '''
+    Compute accuracy with mask
+    '''
+
+    #Calculate result and change the type of mask
+    result = tf.equal(tf.argmax(predict, 1), tf.argmax(label, 1))
+    mask = tf.cast(mask, dtype=tf.float32)
+
+    #Compute the right elements with mask
+    result = result * mask
+
+    accuracy = tf.reduce_sum(result)/tf.reduce_sum(mask)
+
+    
+
+
+
     

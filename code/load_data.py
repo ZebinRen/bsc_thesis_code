@@ -105,6 +105,6 @@ def create_input(path, dataset_name, index, train_num, val_num, test_num = None)
 
 
 #run test
-directed, undirected, features, y_train, y_val, y_test, train_mask, val_mask, test_mask,\
-info = create_input('./data', 'citeseer', 0, 500, 500, None)
+#directed, undirected, features, y_train, y_val, y_test, train_mask, val_mask, test_mask,\
+#info = create_input('./data', 'citeseer', 0, 500, 500, None)
 
