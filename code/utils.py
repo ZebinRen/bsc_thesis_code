@@ -1,5 +1,7 @@
 import tensorflow as tf
+import numpy as np
 import scipy.sparse as sp
+
 def symmetric_normalized_laplacian(adjancy):
     '''
     Given a Lapllacian Matrix
@@ -12,7 +14,7 @@ def symmetric_normalized_laplacian(adjancy):
     '''
     #convert to coo matrix for computation
     adjancy = sp.coo_matrix(adjancy)
-    rowsum = np.array(adj.sum(1))
+    rowsum = np.array(adjancy.sum(1))
 
     #Compute D
     d_inv_sqrt = np.power(rowsum, -0.5).flatten()
@@ -20,7 +22,7 @@ def symmetric_normalized_laplacian(adjancy):
     d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
     d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
 
-    normalized = adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
+    normalized = adjancy.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt).tocoo()
 
     return normalized
     
@@ -33,7 +35,7 @@ def row_normalized(mat):
     #Compute row sum and its inverse
     #If the inverse is inf, set it to 0
     row_sum = np.array(mat.sum(1))
-    rs_inv = np.power(row_sum, -1).flatten
+    rs_inv = np.power(row_sum, -1).flatten()
     rs_inv[np.isinf(rs_inv)] = 0
     r_inv_diag = sp.diags(rs_inv)
     

@@ -26,6 +26,10 @@ class BaseModel(object):
         self.epochs = epochs
         self.weight_decay = weight_decay
         self.early_stopping = early_stopping
+        
+        #Assign input and output dim
+        self.input_dim = input_dim
+        self.output_dim = output_dim
 
         #A list of layers in the model
         self.layers = []
@@ -79,27 +83,28 @@ class BaseModel(object):
         self.activations.append(input)
         for each_layer in self.layers:
             #The input is the output of the previous layer
-            act = each_layer(self.activation[-1])
+            act = each_layer(self.activations[-1])
             self.activations.append(act)
         #output is the last layer's output
         self.outputs = self.activations[-1]
         
         #Get variables
-        variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.name)
+        self.variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.name)
         #Get variable dictionary
 
-        self.loss = _loss()
+        self.loss = self._loss()
 
     def train(self):
         '''
         Train the model
         '''
-    	pass
+        pass
     
     def predict(self, sess):
         '''
         predict the model
         '''
+        pass
 
     
     
@@ -107,6 +112,7 @@ class BaseModel(object):
         '''
         Use tensorboard to draw the graph
         '''
+        pass
         
 
     

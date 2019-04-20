@@ -1,61 +1,60 @@
 import tensorflow as tf
-from base_model import BaseModel
-from layers import *
-from model_utils import *
+from .base_model import BaseModel
+from .layers import *
+from .model_utils import *
 
-class GCN(Model):
+class GCN(BaseModel):
     def __init__(self,
          hidden_num, hidden_dim,
          input_dim, output_dim,
-         total_nodes, total_cates,
+         node_num, cate_num,
          learning_rate, epochs,
          weight_decay, early_stopping,
          activation_func, 
          dropout_prob,
-         bias,
-         name, dataset=None):
+         bias, name):
         super(GCN, self).__init__(
             hidden_num, hidden_dim,
             input_dim, output_dim,
-            leaning_rate, epochs,
+            learning_rate, epochs,
             weight_decay, early_stopping,
             name)
 
-        self.total_nodes = total_nodes
-        self.total_cates = total_cates
+        self.total_nodes = input_dim
+        self.total_cates = output_dim
         self.activation_func = activation_func
         self.dropout_prob = dropout_prob
         self.bias = bias
   
-    #Add placeholders
-    #Note, this dictionary is used to create feed dicts
-    self.placeholders = {}
-    self.placeholders['features'] = tf.sparse_placeholder(tf.float32, shape=(), name='Feature')
-    self.placeholders['adj'] = tf.sparse_placeholder(tf.float32, shape=(), name='Adjancy')
-    self.placeholders['labels'] = tf.placeholder(tf.int32, )
-    self.placeholders['mask'] = tf.placeholder(tf.int32)
+        #Add placeholders
+        #Note, this dictionary is used to create feed dicts
+        self.placeholders = {}
+        self.placeholders['features'] = tf.sparse_placeholder(tf.float32, shape=(), name='Feature')
+        self.placeholders['adj'] = tf.sparse_placeholder(tf.float32, shape=(), name='Adjancy')
+        self.placeholders['labels'] = tf.placeholder(tf.int32, )
+        self.placeholders['mask'] = tf.placeholder(tf.int32)
 
-    self.adjancy = self.placeholders['adj']
-    self.inputs = self.placeholders['features']
-    self.label = self.placeholder['labels']
-    self.mask = self.placeholder['mask']
+        self.adjancy = self.placeholders['adj']
+        self.inputs = self.placeholders['features']
+        self.label = self.placeholders['labels']
+        self.mask = self.placeholders['mask']
 
-    self.build()
+        self.build()
 
 
     def _add_layers(self):
-    for i in range(hidden_num + 1):
-        #only the input layer provides a sparse input matrix
-        if 0 == i:
-            sparse_input = True
-        else:
-            sparse_input = False
-      #each layer has a variable scope
+        for i in range(self.hidden_num + 1):
+            #only the input layer provides a sparse input matrix
+            if 0 == i:
+                sparse_input = True
+            else:
+                sparse_input = False
+        #each layer has a variable scope
         self.layers.append(
             GraphConvLayer(self.adjancy,
                          self.hidden_dim[i], self.hidden_dim[i+1],
                          self.activation_func,
-                         '_GCL_' + str(i),
+                         self.name + '_' + str(i),
                          self.dropout_prob,
                          self.bias,
                          sparse = sparse_input)
@@ -77,7 +76,7 @@ class GCN(Model):
         #Construct the feed dict
         feed_dict = {
           self.adjancy: adj,
-          self.features: inputs,
+          self.features: features,
           self.label: label,
           self.mask: mask
         }
@@ -90,14 +89,17 @@ class GCN(Model):
             loss = sess.run(self.loss, feed_dict=feed_dict)
             loss_list.append(loss)
 
+            #Debug
+            print('epochs: ', epoch, 'loss: ', loss)
             #Test early stopping
+
 
     
 
     def predict(self, sess, adj, features, label, mask):
         feed_dict = {
             self.adjancy: adj,
-            self.features: inputs,
+            self.features: features,
             self.label: label,
             self.mask: mask
         }
