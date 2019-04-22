@@ -38,7 +38,7 @@ class BaseLayer(object):
     #This function is invocked by the object name
     def __call__(self, inputs):
         with tf.name_scope(self.name):   
-            return run(inputs)
+            return self.run(inputs)
     
     def run(self, inputs):
         '''
@@ -92,17 +92,17 @@ class GraphConvLayer(BaseLayer):
         The symmertic normalized Laplacian matrix at the first layer
         Then the convoluted matrix in the following layers
         '''
-        if not self.dropout:
-            #Add dropout
+        if not self.dropout_prob:
             pass
 
-        if self.sparse:
-            inputs = sparse_dropout(inputs, 1 - self.droupout_prob)
         else:
-            x = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+            if self.sparse:
+                inputs = sparse_dropout(inputs, 1 - self.droupout_prob)
+            else:
+                x = tf.nn.dropout(inputs, 1 - self.dropout_prob)
         
         #Do convolution
-        graph_conv(inputs, self.adjancy, self.weights, True)
+        output = graph_conv(inputs, self.adjancy, self.weights, self.sparse)
 
         #bias
         if self.bias != None:

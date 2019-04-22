@@ -2,6 +2,27 @@ import tensorflow as tf
 import numpy as np
 import scipy.sparse as sp
 
+def create_load_sparse(sparse_mat):
+    '''
+    The sparse matrix is saved as a scipy sparse matrix
+    It cannot be directly used by TF
+    This will change the sparse matrix to tuple representation
+    index, values, shape
+    '''
+    if not sp.isspmatrix_coo(sparse_mat):
+        sparse_mat = sparse_mat.tocoo()
+    indexs = np.vstack((sparse_mat.row, sparse_mat.col)).transpose()
+    data = sparse_mat.data
+    shape = sparse_mat.shape
+
+    #Type cast
+    indexs = indexs.astype(np.int64)
+    data = data.astype(np.float32)
+    shape = np.array(list(shape))
+    shape = shape.astype(np.int64)
+
+    return (indexs, data, shape)
+
 def symmetric_normalized_laplacian(adjancy):
     '''
     Given a Lapllacian Matrix

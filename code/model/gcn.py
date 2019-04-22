@@ -12,32 +12,40 @@ class GCN(BaseModel):
          weight_decay, early_stopping,
          activation_func, 
          dropout_prob,
-         bias, name):
+         bias, optimizer,
+         name):
         super(GCN, self).__init__(
             hidden_num, hidden_dim,
             input_dim, output_dim,
             learning_rate, epochs,
             weight_decay, early_stopping,
             name)
-
-        self.total_nodes = input_dim
+        
+        #Some variables for debug
+        self.debug = 1
+        #End
+        self.total_nodes = node_num
         self.total_cates = output_dim
         self.activation_func = activation_func
         self.dropout_prob = dropout_prob
         self.bias = bias
+
   
         #Add placeholders
         #Note, this dictionary is used to create feed dicts
+        #, shape=(self.total_nodes, self.input_dim)
         self.placeholders = {}
-        self.placeholders['features'] = tf.sparse_placeholder(tf.float32, shape=(), name='Feature')
-        self.placeholders['adj'] = tf.sparse_placeholder(tf.float32, shape=(), name='Adjancy')
-        self.placeholders['labels'] = tf.placeholder(tf.int32, )
-        self.placeholders['mask'] = tf.placeholder(tf.int32)
+        self.placeholders['features'] = tf.sparse_placeholder(tf.float32, name='Feature')
+        self.placeholders['adj'] = tf.sparse_placeholder(tf.float32, shape=(self.total_nodes, self.total_nodes), name='Adjancy')
+        self.placeholders['labels'] = tf.placeholder(tf.int32, shape=(self.total_nodes, self.total_cates), name='labels')
+        self.placeholders['mask'] = tf.placeholder(tf.int32, shape=(self.total_nodes), name='mask')
 
         self.adjancy = self.placeholders['adj']
         self.inputs = self.placeholders['features']
         self.label = self.placeholders['labels']
         self.mask = self.placeholders['mask']
+
+        self.optimizer = optimizer(learning_rate=self.learning_rate)
 
         self.build()
 
@@ -50,8 +58,8 @@ class GCN(BaseModel):
             else:
                 sparse_input = False
         #each layer has a variable scope
-        self.layers.append(
-            GraphConvLayer(self.adjancy,
+            self.layers.append(
+                GraphConvLayer(self.adjancy,
                          self.hidden_dim[i], self.hidden_dim[i+1],
                          self.activation_func,
                          self.name + '_' + str(i),
@@ -61,11 +69,14 @@ class GCN(BaseModel):
       )
   
     def _loss(self):
-        self.loss = 0
+        #self.loss = 0
         #Regularization
 
         #loss
-        self.loss += masked_softmax_cross_entropy(self.outputs, self.labels, self.mask) 
+        loss = masked_softmax_cross_entropy(self.outputs, self.label, self.mask)
+
+        return loss
+
 
     def train(self, sess, adj, features, label, mask):
         '''
@@ -76,18 +87,18 @@ class GCN(BaseModel):
         #Construct the feed dict
         feed_dict = {
           self.adjancy: adj,
-          self.features: features,
+          self.inputs: features,
           self.label: label,
           self.mask: mask
         }
-        
+
         sess.run(tf.global_variables_initializer())
 
         #Train precedure
-        for epoch in self.epochs:
+        for epoch in range(self.epochs):
 
-            loss = sess.run(self.loss, feed_dict=feed_dict)
-            loss_list.append(loss)
+            loss, _ = sess.run([self.loss, self.opt_op],  feed_dict=feed_dict)
+            #loss_list.append(loss)
 
             #Debug
             print('epochs: ', epoch, 'loss: ', loss)
@@ -99,7 +110,7 @@ class GCN(BaseModel):
     def predict(self, sess, adj, features, label, mask):
         feed_dict = {
             self.adjancy: adj,
-            self.features: features,
+            self.inputs: features,
             self.label: label,
             self.mask: mask
         }

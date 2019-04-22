@@ -54,6 +54,7 @@ class BaseModel(object):
         self.loss = None
 
         self.optimizer = None
+        self.opt_op = None
 
 
     def _add_layers(self):
@@ -80,7 +81,7 @@ class BaseModel(object):
             self._add_layers()
         
         # Connect inputs and layers
-        self.activations.append(input)
+        self.activations.append(self.inputs)
         for each_layer in self.layers:
             #The input is the output of the previous layer
             act = each_layer(self.activations[-1])
@@ -92,7 +93,12 @@ class BaseModel(object):
         self.variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=self.name)
         #Get variable dictionary
 
+        #Get loss
         self.loss = self._loss()
+
+        #Assign optimizer
+        self.opt_op = self.optimizer.minimize(self.loss)
+
 
     def train(self):
         '''

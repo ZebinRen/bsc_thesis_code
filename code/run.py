@@ -8,13 +8,14 @@ from load_data import create_input
 from utils import *
 from model.gcn import GCN
 
-learning_rate = 0.001
-epochs = 20
+learning_rate = 0.01
+epochs = 4000
 weight_decay = 0 
 early_stopping = 10
 activation_func = tf.nn.relu
 dropout_prob = None
 bias = None
+optimizer = tf.train.AdamOptimizer
 
 directed, undirected, features, y_train, y_val, y_test, train_mask, val_mask, test_mask,\
 info = create_input('./data', 'citeseer', 0, 500, 500, None)
@@ -31,6 +32,11 @@ nodes = directed.shape[0]
 input_dim = features.shape[1]
 output_dim = y_train.shape[1]
 
+directed = create_load_sparse(directed)
+undirected = create_load_sparse(undirected)
+features = create_load_sparse(features)
+
+
 #Create model
 model = GCN(
     hidden_num = 1, hidden_dim = [8],
@@ -41,6 +47,7 @@ model = GCN(
     activation_func = activation_func,
     dropout_prob = dropout_prob,
     bias = bias,
+    optimizer = optimizer,
     name='GCN'
 )
 

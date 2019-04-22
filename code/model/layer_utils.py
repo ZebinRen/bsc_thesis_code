@@ -8,7 +8,7 @@ def dropout_sparse(x, keep_prob):
     '''
 
 
-def graph_conv(X, A, weights, A_is_sparse = False):
+def graph_conv(X, A, weights, X_is_sparse = False):
     '''
     Graph convolution:
     X: Feature Matrix(Can be sparse)
@@ -19,12 +19,15 @@ def graph_conv(X, A, weights, A_is_sparse = False):
     Return: AXW
 
     '''
-    XW = tf.matmul(X, weights)
+    print(X.shape)
+    print(weights.shape)
+    if X_is_sparse:
+        XW = tf.sparse_tensor_dense_matmul(X, weights)
+    else: 
+        XW = tf.matmul(X, weights)
     
-    if a_is_sparse:
-        AXW = tf.sparse_tensor_dense_matmul(A, XW)
-    else:
-        AXW = tf.matmul(A, XW)
+    AXW = tf.sparse_tensor_dense_matmul(A, XW)
+
     
     return AXW
 

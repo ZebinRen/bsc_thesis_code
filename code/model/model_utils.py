@@ -6,7 +6,7 @@ def masked_softmax_cross_entropy(predict, label, mask):
     Cross entropy: 1*ln(P(right_label))
     '''
     #Compute loss
-    loss = tf.nn.masked_softmax_cross_entropy(logits=predict, labels=label)
+    loss = tf.nn.softmax_cross_entropy_with_logits(logits=predict, labels=label)
     #Change the type of mask
     mask = tf.cast(mask, dtype=tf.float32)
     mask = mask/tf.reduce_mean(mask)
