@@ -55,41 +55,67 @@ class GCN(BaseModel):
             #only the input layer provides a sparse input matrix
             if 0 == i:
                 sparse_input = True
+                dropout = False
             else:
                 sparse_input = False
+                dropout = self.dropout_prob
         #each layer has a variable scope
             self.layers.append(
                 GraphConvLayer(self.adjancy,
                          self.hidden_dim[i], self.hidden_dim[i+1],
                          self.activation_func,
                          self.name + '_' + str(i),
-                         self.dropout_prob,
+                         dropout,
                          self.bias,
                          sparse = sparse_input)
       )
   
     def _loss(self):
-        #self.loss = 0
-        #Regularization
-
+        '''
+        Define loss function
+        '''
         #loss
         loss = masked_softmax_cross_entropy(self.outputs, self.label, self.mask)
+        
+        #Regularization, weight_decay
+        for each_layer in self.layers:
+            for var in each_layer.weight_decay_vars:
+                print(var)
+                loss += self.weight_decay * tf.nn.l2_loss(var)
 
         return loss
+    
+    def _accuracy(self):
+        '''
+        Define accuracy
+        '''
 
+        accuracy = masked_accuracy(self.outputs, self.label, self.mask)
 
-    def train(self, sess, adj, features, label, mask):
+        return accuracy
+        
+
+    def train(self, sess, adj, features, train_label, val_label, train_mask, val_mask):
         '''
         Train the model
         '''
         #Loss: Saves a list of the loss
         loss_list = []
+        cost_list = []
+        acc_list = []
         #Construct the feed dict
         feed_dict = {
           self.adjancy: adj,
           self.inputs: features,
-          self.label: label,
-          self.mask: mask
+          self.label: train_label,
+          self.mask: train_mask
+        }
+
+        feed_dict_val = {
+          self.adjancy: adj,
+          self.inputs: features,
+          self.label: val_label,
+          self.mask: val_mask       
         }
 
         sess.run(tf.global_variables_initializer())
@@ -97,12 +123,19 @@ class GCN(BaseModel):
         #Train precedure
         for epoch in range(self.epochs):
 
-            loss, _ = sess.run([self.loss, self.opt_op],  feed_dict=feed_dict)
-            #loss_list.append(loss)
+            loss, train_accu,  _ = sess.run([self.loss, self.accuracy, self.opt_op],  feed_dict=feed_dict)
+            loss_list.append(loss)
 
-            #Debug
-            print('epochs: ', epoch, 'loss: ', loss)
+            cost, val_accu = sess.run([self.loss, self.accuracy], feed_dict=feed_dict_val)
+            cost_list.append(cost)
+            acc_list.append(val_accu)
+
+            print('epochs: ', epoch, 'loss: ', loss, 'train_accu: ', 'cost: ', cost, train_accu, 'accuracy: ',  val_accu)
+            
             #Test early stopping
+            if early_stopping(acc_list, epoch, self.early_stopping):
+                print("Early stopping")
+                break
 
 
     
@@ -122,9 +155,3 @@ class GCN(BaseModel):
         outputs = mask * outputs
 
         return outputs
-
-
-
-
-
-    

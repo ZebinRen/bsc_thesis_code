@@ -16,6 +16,7 @@ class BaseLayer(object):
         self.dropout_prob = dropout_prob
         self.bias = bias
         self.sparse = sparse
+        self.weight_decay_vars = []
 
 
         #If dropout_prob is assigned a value
@@ -81,11 +82,12 @@ class GraphConvLayer(BaseLayer):
         #Define layers' variable
         with tf.variable_scope(self.name + '_var'):
             self.weights = glort_init([input_dim, output_dim], name = 'weights')
+            self.weight_decay_vars.append(self.weights)
         
         #If bias is used
             if self.bias:
-                self.bias = zeros_inin([output_dim], name = 'bias')
-    
+                self.bias = tf.zeros([output_dim], name = 'bias')
+                self.weight_decay_vars.append(self.bias)    
     def run(self, inputs):
         '''
         Inputs are features, Since the feateure map will change through the network
@@ -96,10 +98,7 @@ class GraphConvLayer(BaseLayer):
             pass
 
         else:
-            if self.sparse:
-                inputs = sparse_dropout(inputs, 1 - self.droupout_prob)
-            else:
-                x = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+            x = tf.nn.dropout(inputs, 1 - self.dropout_prob)
         
         #Do convolution
         output = graph_conv(inputs, self.adjancy, self.weights, self.sparse)

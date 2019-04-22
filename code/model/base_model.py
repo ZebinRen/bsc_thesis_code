@@ -70,6 +70,12 @@ class BaseModel(object):
         It should be defined in the specific model class
         '''
         raise NotImplementedError
+
+    def _accuracy(self):
+        '''
+        Compute accuracy
+        '''
+        raise NotImplementedError
     
     def build(self):
         '''
@@ -95,6 +101,7 @@ class BaseModel(object):
 
         #Get loss
         self.loss = self._loss()
+        self.accuracy = self._accuracy()
 
         #Assign optimizer
         self.opt_op = self.optimizer.minimize(self.loss)
@@ -104,13 +111,13 @@ class BaseModel(object):
         '''
         Train the model
         '''
-        pass
+        raise NotImplementedError
     
     def predict(self, sess):
         '''
         predict the model
         '''
-        pass
+        raise NotImplementedError
 
     
     
@@ -120,9 +127,3 @@ class BaseModel(object):
         '''
         pass
         
-
-    
-    
-
-
-

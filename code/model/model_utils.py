@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 def masked_softmax_cross_entropy(predict, label, mask):
     '''
@@ -23,6 +24,7 @@ def masked_accuracy(predict, label, mask):
 
     #Calculate result and change the type of mask
     result = tf.equal(tf.argmax(predict, 1), tf.argmax(label, 1))
+    result = tf.cast(result, dtype=tf.float32)
     mask = tf.cast(mask, dtype=tf.float32)
 
     #Compute the right elements with mask
@@ -30,7 +32,20 @@ def masked_accuracy(predict, label, mask):
 
     accuracy = tf.reduce_sum(result)/tf.reduce_sum(mask)
 
-    
+    return accuracy
+
+def early_stopping(acc_list, epochs, memory):
+    '''
+    Early-stopping
+    '''
+    if epochs < memory:
+        return False
+
+    if acc_list[-1] < np.mean(acc_list[-(memory + 1): -1]):
+        return True
+    else:
+        return False
+
 
 
 

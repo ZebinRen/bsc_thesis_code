@@ -8,17 +8,17 @@ from load_data import create_input
 from utils import *
 from model.gcn import GCN
 
-learning_rate = 0.01
-epochs = 4000
-weight_decay = 0 
-early_stopping = 10
+learning_rate = 0.0005
+epochs = 400
+weight_decay = 5e-4
+early_stopping = 40
 activation_func = tf.nn.relu
-dropout_prob = None
-bias = None
+dropout_prob = 0.5
+bias = True
 optimizer = tf.train.AdamOptimizer
 
 directed, undirected, features, y_train, y_val, y_test, train_mask, val_mask, test_mask,\
-info = create_input('./data', 'citeseer', 0, 500, 500, None)
+info = create_input('./data', 'citeseer', 1, 120, 500, None)
 
 #preprocess the adjancy matrix for GCN
 sys_norm_directed = symmetric_normalized_laplacian(directed)
@@ -39,7 +39,7 @@ features = create_load_sparse(features)
 
 #Create model
 model = GCN(
-    hidden_num = 1, hidden_dim = [8],
+    hidden_num = 1, hidden_dim = [16],
     input_dim = input_dim, output_dim = output_dim,
     node_num = nodes, cate_num = output_dim,
     learning_rate = learning_rate, epochs = epochs,
@@ -53,6 +53,6 @@ model = GCN(
 
 sess = tf.Session()
 
-model.train(sess, directed, features, y_train, train_mask)
+model.train(sess, directed, features, y_train, y_val, train_mask, val_mask)
 
 
