@@ -34,6 +34,7 @@ def masked_accuracy(predict, label, mask):
 
     return accuracy
 
+
 def early_stopping(acc_list, epochs, memory):
     '''
     Early-stopping
@@ -41,10 +42,11 @@ def early_stopping(acc_list, epochs, memory):
     if epochs < memory:
         return False
 
-    if acc_list[-1] < np.mean(acc_list[-(memory + 1): -1]):
+    if acc_list[-1]  > np.mean(acc_list[-(memory + 1): -1]):
         return True
     else:
         return False
+
 
 
 

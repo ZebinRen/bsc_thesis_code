@@ -110,6 +110,74 @@ class GraphConvLayer(BaseLayer):
         #activation
         return self.activation_func(output)
 
+
+class DenseLayer(BaseLayer):
+    '''
+    Dense Layer
+    '''
+    def __init__(self,
+                 adjancy,
+                 input_dim, output_dim,
+                 activation_func,
+                 name,
+                 dropout_prob = None,
+                 bias = False,
+                 sparse = False):
+        super(DenseLayer, self).__init__(
+                                            input_dim, output_dim,
+                                            activation_func,
+                                            name,
+                                            dropout_prob,
+                                            bias,
+                                            sparse
+                                            )
+
+        self.adjancy = adjancy
+
+        #Define layer's variables
+        with tf.variable_scope(self.name + '_var'): 
+            self.weights = glort_init([input_dim, output_dim], name = 'weights')
+
+
+            #if bias is used
+            if self.bias:
+                self.bias = tf.zeros([output_dim], name = 'bias')
+
+
+    def run(self, inputs):
+        '''
+        Inputs are features or the output passed by the previous layer
+        This will connect each layers into one compution graph
+        '''
+
+
+        #Note, sparse drop is not implemented
+        #Since we assume that no dropout is implemented and the output of a layer is dense matrix
+        #Drop out to input can be implemented befor it is feeded to the train function 
+        if not self.dropout_prob:
+            pass
+
+        else:
+            inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+
+
+        #Do the calculation
+        if self.sparse:
+            output = tf.sparse_tensor_dense_matmul(inputs, self.weights)
+        else:
+            output = tf.matmul(inputs, self.weights)
+
+
+        #bias
+        if self.bias != None:
+            output += self.bias
+
+        #acitvation
+        return self.activation_func(output)
+
+
+
+
         
 
 

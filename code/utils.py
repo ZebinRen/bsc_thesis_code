@@ -21,7 +21,7 @@ def create_load_sparse(sparse_mat):
     shape = np.array(list(shape))
     shape = shape.astype(np.int64)
 
-    return (indexs, data, shape)
+    return [indexs, data, shape]
 
 def symmetric_normalized_laplacian(adjancy):
     '''

@@ -3,7 +3,7 @@ from .base_model import BaseModel
 from .layers import *
 from .model_utils import *
 
-class GCN(BaseModel):
+class MLP(BaseModel):
     def __init__(self,
          hidden_num, hidden_dim,
          input_dim, output_dim,
@@ -14,12 +14,13 @@ class GCN(BaseModel):
          dropout_prob,
          bias, optimizer,
          name):
-        super(GCN, self).__init__(
+        super(MLP, self).__init__(
             hidden_num, hidden_dim,
             input_dim, output_dim,
             learning_rate, epochs,
             weight_decay, early_stopping,
             name)
+        
         
         #End
         self.total_nodes = node_num
@@ -59,7 +60,7 @@ class GCN(BaseModel):
                 dropout = self.dropout_prob
         #each layer has a variable scope
             self.layers.append(
-                GraphConvLayer(self.adjancy,
+                DenseLayer(self.adjancy,
                          self.hidden_dim[i], self.hidden_dim[i+1],
                          self.activation_func,
                          self.name + '_' + str(i),
@@ -67,6 +68,7 @@ class GCN(BaseModel):
                          self.bias,
                          sparse = sparse_input)
       )
+        
   
     def _loss(self):
         '''
@@ -76,10 +78,10 @@ class GCN(BaseModel):
         loss = masked_softmax_cross_entropy(self.outputs, self.label, self.mask)
         
         #Regularization, weight_decay
-        for each_layer in self.layers: #[0: -1]:
+        for each_layer in self.layers:
             for var in each_layer.weight_decay_vars:
+                print(var)
                 loss += self.weight_decay * tf.nn.l2_loss(var)
-
 
         return loss
     
@@ -128,10 +130,10 @@ class GCN(BaseModel):
             cost_list.append(cost)
             acc_list.append(val_accu)
 
-            print('epochs: ', epoch, 'loss: ', loss, 'train_accu: ', train_accu, 'cost: ', cost, train_accu, 'accuracy: ',  val_accu)
+            print('epochs: ', epoch, 'loss: ', loss, 'train_accu: ', 'cost: ', cost, train_accu, 'accuracy: ',  val_accu)
             
             #Test early stopping
-            if early_stopping(cost_list, epoch, self.early_stopping):
+            if early_stopping(acc_list, epoch, self.early_stopping):
                 print("Early stopping")
                 break
 

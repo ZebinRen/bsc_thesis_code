@@ -1,4 +1,5 @@
 import tensorflow as tf
+import os
 _MODEL_NAME = []
 
 class BaseModel(object):
@@ -119,11 +120,17 @@ class BaseModel(object):
         '''
         raise NotImplementedError
 
+
     
     
-    def draw_graph(self, path, file_name):
+    def draw_graph(self, sess, path, file_name):
         '''
         Use tensorboard to draw the graph
+        To use tensorboard
+        tensorboard --logdir='PATH' --port 6006
+        Then visit http://localhost:6006/
         '''
-        pass
+        writer = tf.summary.FileWriter(os.path.join(path, file_name), sess.graph)
+        print(sess.run)
+        writer.close()
         
