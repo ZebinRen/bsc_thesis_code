@@ -49,7 +49,7 @@ def load_data(path, dataset_name, index):
     return data_dict
 
 
-def create_input(path, dataset_name, index, train_num, val_num, test_num = None):
+def create_raw_input(path, dataset_name, index, train_num, val_num, test_num = None):
     '''
     Create the data that can be directly used by the neural network
     NOTE: The data is not normalized

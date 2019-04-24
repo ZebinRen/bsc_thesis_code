@@ -2,6 +2,9 @@ import tensorflow as tf
 import numpy as np
 import scipy.sparse as sp
 
+from load_data import create_raw_input
+
+
 def create_load_sparse(sparse_mat):
     '''
     The sparse matrix is saved as a scipy sparse matrix
@@ -63,6 +66,92 @@ def row_normalized(mat):
     mat = r_inv_diag.dot(mat)
 
     return mat
+
+def create_train_feed(dataset, directed = False):
+    '''
+    create the parameters for train method
+    '''
+    if directed:
+        adj = dataset['directed']
+    else:
+        adj = dataset['undirected']
+
+    features = dataset['features']
+    y_train = dataset['train_label']
+    y_val = dataset['val_label']
+
+    train_mask = dataset['train_mask']
+    val_mask = dataset['val_mask']
+
+    dataset = {
+        'adj': adj, 'features': features, 
+        'train_label': y_train, 
+        'val_label': y_val, 
+        'train_mask': train_mask, 
+        'val_mask': val_mask
+    }
+
+    return dataset
+
+def pre_GCN(directed, undirected):
+    '''
+    Preprocess adjancy matrix for GCN
+    '''
+    sys_norm_directed = symmetric_normalized_laplacian(directed)
+    sys_norm_undirected = symmetric_normalized_laplacian(undirected)
+
+    return sys_norm_directed, sys_norm_undirected
+
+
+
+def create_input(model_name, path, dataset_name, index, train_num, val_num, test_num = None):
+    '''
+    This will create the input that can be directly feed to the neural network
+    '''
+    directed, undirected, features, y_train, y_val, y_test, train_mask, val_mask, test_mask,\
+    info = create_raw_input('./data', 'citeseer', 1, 230, 500, None)
+
+    #preprocess features
+    norm_features = row_normalized(features)
+
+    #information
+    node_num = directed.shape[0]
+    input_dim = features.shape[1]
+    output_dim = y_train.shape[1]
+
+    #Preprocess adjancy for different models
+    if 'gcn' == model_name:
+        directed, undirected = pre_GCN(directed, undirected)
+    else:
+        raise 'There is no model named: ' + model_name
+
+    
+    #Change scipy sparse matrix to the format that can be directly used by
+    #the model
+    directed = create_load_sparse(directed)
+    undirected = create_load_sparse(undirected)
+    features = create_load_sparse(features)
+
+    dataset = {
+        'directed': directed,
+        'undirected': undirected,
+        'features': features,
+        'train_label': y_train,
+        'val_label': y_val,
+        'test_label': y_test,
+        'train_mask': train_mask,
+        'val_mask': val_mask,
+        'test_mask': test_mask
+    }
+
+    info = {
+        'input_dim': input_dim,
+        'output_dim': output_dim,
+        'node_num': node_num,
+        'cate_num': output_dim
+    }
+
+    return dataset, info
 
 
 
