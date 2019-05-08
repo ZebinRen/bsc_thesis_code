@@ -54,5 +54,18 @@ def glort_init(shape, name=None):
 
     return tf.Variable(init, name=name)
 
+def mask_by_adj(mat, adj):
+    '''
+    Mask a matrix by the adjancy matrix 
+    The adj is a sparse matrix
+    '''
+    adj = tf.sparse_to_dense(adj)
+    mask = tf.cast(adj, tf.bool)
+
+    #Element wise mul
+
+    return tf.math.multiply(mask, mat)
+
+
         
 

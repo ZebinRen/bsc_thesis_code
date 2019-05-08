@@ -122,6 +122,9 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
     #Preprocess adjancy for different models
     if 'gcn' == model_name:
         directed, undirected = pre_GCN(directed, undirected)
+    if 'gat' == model_name:
+        #directe, sys_norm_undirected
+        pass
     else:
         raise 'There is no model named: ' + model_name
 

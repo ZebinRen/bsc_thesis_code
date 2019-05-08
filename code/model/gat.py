@@ -3,7 +3,7 @@ from .base_model import BaseModel
 from .layers import *
 from .model_utils import *
 
-class GCN(BaseModel):
+class GAT(BaseModel):
     def __init__(self,
          hidden_num, hidden_dim,
          input_dim, output_dim,
@@ -13,8 +13,9 @@ class GCN(BaseModel):
          activation_func, 
          dropout_prob,
          bias, optimizer,
+         attention_head,
          name):
-        super(GCN, self).__init__(
+        super(GAT, self).__init__(
             hidden_num, hidden_dim,
             input_dim, output_dim,
             learning_rate, epochs,
@@ -27,6 +28,7 @@ class GCN(BaseModel):
         self.activation_func = activation_func
         self.dropout_prob = dropout_prob
         self.bias = bias
+        self.attention_head = attention_head
 
   
         #Add placeholders
@@ -51,22 +53,34 @@ class GCN(BaseModel):
 
 
     def _add_layers(self):
-        for i in range(self.hidden_num + 1):
-            #only the input layer provides a sparse input matrix
-            if 0 == i:
-                sparse_input = True
-            else:
-                sparse_input = False
-        #each layer has a variable scope
-            self.layers.append(
-                GraphConvLayer(self.adjancy,
-                         self.hidden_dim[i], self.hidden_dim[i+1],
-                         self.activation_func,
-                         self.name + '_' + str(i),
-                         self.dropout_prob,
-                         self.bias,
-                         sparse = sparse_input)
-      )
+        #Append hidden layer
+        self.layers.append(
+            GraphAttentionLayer(
+                self.adjancy,
+                self.hidden_dim[0], self.hidden_dim[1],
+                self.activation_func,
+                self.name + '_1',
+                self.total_nodes,
+                self.attention_head,
+                self.dropout_prob,
+                self.bias,
+                sparse = True,
+                aggregate_mode = 'concate',
+                ))
+        #Append output layer
+        self.layers.append(
+            GraphAttentionLayer(
+                self.adjancy,
+                self.hidden_dim[1] * self.attention_head, self.hidden_dim[2],
+                self.activation_func,
+                self.name + '_2',
+                self.total_nodes,
+                self.attention_head,
+                self.dropout_prob,
+                self.bias,
+                sparse = False,
+                aggregate_mode = 'ave'
+                ))
   
     def _loss(self):
         '''

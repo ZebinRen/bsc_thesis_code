@@ -3,7 +3,7 @@ from .base_model import BaseModel
 from .layers import *
 from .model_utils import *
 
-class GCN(BaseModel):
+class FirstCheb(BaseModel):
     def __init__(self,
          hidden_num, hidden_dim,
          input_dim, output_dim,
@@ -14,7 +14,7 @@ class GCN(BaseModel):
          dropout_prob,
          bias, optimizer,
          name):
-        super(GCN, self).__init__(
+        super(FirstCheb, self).__init__(
             hidden_num, hidden_dim,
             input_dim, output_dim,
             learning_rate, epochs,
@@ -59,7 +59,7 @@ class GCN(BaseModel):
                 sparse_input = False
         #each layer has a variable scope
             self.layers.append(
-                GraphConvLayer(self.adjancy,
+                FirstChebLayer(self.adjancy,
                          self.hidden_dim[i], self.hidden_dim[i+1],
                          self.activation_func,
                          self.name + '_' + str(i),
