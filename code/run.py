@@ -40,7 +40,7 @@ directed = create_load_sparse(directed)
 undirected = create_load_sparse(undirected)
 features = create_load_sparse(features)
 '''
-data, addi_parameters = create_input('GCN', './data', 'citeseer', 1, 230, 500, None)
+data, addi_parameters = create_input('gcn', './data', 'citeseer', 1, 230, 500, None)
 directed = data['directed']
 undirected = data['undirected']
 features = data['features']
@@ -50,8 +50,9 @@ y_test = data['test_label']
 train_mask = data['train_mask']
 val_mask = data['val_mask']
 test_mask = data['test_mask']
+num_featuers_nonzero = features[1].shape
 
-
+'''
 #Test random search
 dataset = create_train_feed(data)
 
@@ -64,7 +65,7 @@ print(para_accu)
 sess = tf.Session()
 
 model = GCN(**para_set, **fixed_parameter, **addi_parameters)
-model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask)
+model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
 accu = model.test(sess, undirected, features, y_test, test_mask)
@@ -83,19 +84,12 @@ print('test acucracy: ', accu)
 
 
 #Test random search finish
-
-
-
-#Test GCN
+'''
 
 '''
-#Dropout for input
-print(len(directed[1]))
-random_tensor = 1- dropout_prob
-random_tensor += tf.random_uniform([len(directed[1])])
-dropout_mask = tf.cast(tf.floor(random_tensor), dtype=tf.bool)
-print(directed)
-#pre_out = tf.sparse_retain(list(directed), dropout_mask)
+#Test GCN
+
+
 
 #directed = pre_out * (1./(1- dropout_prob))
 '''
@@ -116,24 +110,23 @@ model = GCN(
 
 sess = tf.Session()
 
-model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask)
+model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-accu = model.test(sess, undirected, features, y_test, test_mask)
+accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
 print('test acucracy: ', accu)
 
 #Test GCN finish
 '''
 
 
-'''
+
 #Test MLP
 
 #Create model
 model = MLP(
-    hidden_num = 1, hidden_dim = [32],
-    input_dim = input_dim, output_dim = output_dim,
-    node_num = nodes, cate_num = output_dim,
+    hidden_num = 1, hidden_dim = [hidden_dim],
+    **addi_parameters,
     learning_rate = learning_rate, epochs = epochs,
     weight_decay = weight_decay, early_stopping = early_stopping,
     activation_func = activation_func,
@@ -145,11 +138,10 @@ model = MLP(
 
 sess = tf.Session()
 
-model.train(sess, directed, features, y_train, y_val, train_mask, val_mask)
+model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-accu = model.test(sess, directed, features, y_test, test_mask)
+accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
 print('test acucracy: ', accu)
 
 #Test MLP finish
-'''

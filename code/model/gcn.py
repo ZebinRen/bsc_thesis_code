@@ -37,11 +37,13 @@ class GCN(BaseModel):
         self.placeholders['adj'] = tf.sparse_placeholder(tf.float32, shape=(self.total_nodes, self.total_nodes), name='Adjancy')
         self.placeholders['labels'] = tf.placeholder(tf.int32, shape=(self.total_nodes, self.total_cates), name='labels')
         self.placeholders['mask'] = tf.placeholder(tf.int32, shape=(self.total_nodes), name='mask')
+        self.placeholders['num_features_nonzero'] = tf.placeholder(tf.int32, name='num_features_nonzero')
 
         self.adjancy = self.placeholders['adj']
         self.inputs = self.placeholders['features']
         self.label = self.placeholders['labels']
         self.mask = self.placeholders['mask']
+        self.num_features_nonzero = self.placeholders['num_features_nonzero']
 
         self.optimizer = optimizer(learning_rate=self.learning_rate)
 
@@ -53,17 +55,15 @@ class GCN(BaseModel):
             #only the input layer provides a sparse input matrix
             if 0 == i:
                 sparse_input = True
-                dropout = False
             else:
                 sparse_input = False
-                dropout = self.dropout_prob
         #each layer has a variable scope
             self.layers.append(
                 GraphConvLayer(self.adjancy,
                          self.hidden_dim[i], self.hidden_dim[i+1],
                          self.activation_func,
                          self.name + '_' + str(i),
-                         dropout,
+                         self.dropout_prob,
                          self.bias,
                          sparse = sparse_input)
       )
@@ -93,7 +93,7 @@ class GCN(BaseModel):
         return accuracy
         
 
-    def train(self, sess, adj, features, train_label, val_label, train_mask, val_mask):
+    def train(self, sess, adj, features, train_label, val_label, train_mask, val_mask, num_features_nonzero):
         '''
         Train the model
         '''
@@ -106,14 +106,16 @@ class GCN(BaseModel):
           self.adjancy: adj,
           self.inputs: features,
           self.label: train_label,
-          self.mask: train_mask
+          self.mask: train_mask,
+          self.num_features_nonzero: num_features_nonzero
         }
 
         feed_dict_val = {
           self.adjancy: adj,
           self.inputs: features,
           self.label: val_label,
-          self.mask: val_mask       
+          self.mask: val_mask,
+          self.num_features_nonzero: num_features_nonzero       
         }
 
         sess.run(tf.global_variables_initializer())
@@ -155,7 +157,7 @@ class GCN(BaseModel):
 
         return cate_index
 
-    def test(self, sess, adj, features, label, mask):
+    def test(self, sess, adj, features, label, mask, num_features_nonzero):
         '''
         Test the model, return accuracy
         '''
@@ -163,7 +165,8 @@ class GCN(BaseModel):
             self.adjancy: adj, 
             self.inputs: features,
             self.label: label,
-            self.mask: mask
+            self.mask: mask,
+            self.num_features_nonzero: num_features_nonzero
         }
 
         accu = sess.run(self.accuracy, feed_dict=feed_dict)

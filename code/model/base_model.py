@@ -91,7 +91,7 @@ class BaseModel(object):
         self.activations.append(self.inputs)
         for each_layer in self.layers:
             #The input is the output of the previous layer
-            act = each_layer(self.activations[-1])
+            act = each_layer(self.activations[-1], self.num_features_nonzero)
             self.activations.append(act)
         #output is the last layer's output
         self.outputs = self.activations[-1]

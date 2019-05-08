@@ -107,11 +107,3 @@ evaluate_times = 3):
 
 
     return best_para, best_accu
-
-
-
-
-
-
-
-

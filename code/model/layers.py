@@ -37,9 +37,9 @@ class BaseLayer(object):
             
 
     #This function is invocked by the object name
-    def __call__(self, inputs):
+    def __call__(self, inputs, num_features_nonzero):
         with tf.name_scope(self.name):   
-            return self.run(inputs)
+            return self.run(inputs, num_features_nonzero)
     
     def run(self, inputs):
         '''
@@ -68,7 +68,7 @@ class GraphConvLayer(BaseLayer):
                  name,
                  dropout_prob = None,
                  bias = False,
-                 sparse = False):
+                 sparse = False,):
         super(GraphConvLayer, self).__init__(
                                             input_dim, output_dim,
                                             activation_func,
@@ -77,7 +77,9 @@ class GraphConvLayer(BaseLayer):
                                             bias,
                                             sparse
                                             )
+
         self.adjancy = adjancy
+
         
         #Define layers' variable
         with tf.variable_scope(self.name + '_var'):
@@ -88,7 +90,7 @@ class GraphConvLayer(BaseLayer):
             if self.bias:
                 self.bias = tf.zeros([output_dim], name = 'bias')
                 self.weight_decay_vars.append(self.bias)    
-    def run(self, inputs):
+    def run(self, inputs, num_features_nonzero = None):
         '''
         Inputs are features, Since the feateure map will change through the network
         The symmertic normalized Laplacian matrix at the first layer
@@ -98,7 +100,10 @@ class GraphConvLayer(BaseLayer):
             pass
 
         else:
-            x = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+            if self.sparse:
+                inputs = sparse_dropout(inputs, 1 - self.dropout_prob, num_features_nonzero)
+            else:
+                inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
         
         #Do convolution
         output = graph_conv(inputs, self.adjancy, self.weights, self.sparse)
@@ -144,7 +149,7 @@ class DenseLayer(BaseLayer):
                 self.bias = tf.zeros([output_dim], name = 'bias')
 
 
-    def run(self, inputs):
+    def run(self, inputs, num_features_nonzero):
         '''
         Inputs are features or the output passed by the previous layer
         This will connect each layers into one compution graph
@@ -158,7 +163,10 @@ class DenseLayer(BaseLayer):
             pass
 
         else:
-            inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+            if self.sparse:
+                inputs = sparse_dropout(inputs, 1 - self.dropout_prob, num_features_nonzero)
+            else:
+                inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
 
 
         #Do the calculation

@@ -13,11 +13,11 @@ from model.mlp import MLP
 from model.gcn import GCN
 
 #Some parameters for tuning hyperparameters
-random_times = 1
-evaluate_times = 1
+random_times = 50
+evaluate_times = 3
 
-model_list = [GCN]
-model_name_list = ['gcn']
+model_list = [GCN, MLP]
+model_name_list = ['gcn', 'mlp']
 
 dataset_path = './data'
 dataset_name = 'citeseer'

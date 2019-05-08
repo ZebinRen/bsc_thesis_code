@@ -1,24 +1,25 @@
 import tensorflow as tf
 import numpy as np
 
-'''
-def sparse_dropout(x, keep_prob, dim):
-    
+
+def sparse_dropout(x, keep_prob, noise_shape):
+    '''
+    From kipf, GCN
     Do dropout for sparse tensors
-
+    '''
     
-    noise_length = x.values.shape[0]
-    print(noise_length)
+    random_tensor = keep_prob
 
-    dropout_mask = keep_prob + tf.random_uniform((noise_length))
-    dropout_mask = tf.floor(dropout_mask)
-    dropout_mask = tf.cast(dropout_mask, dtype=tf.bool)
+    #Add a random noise
+    random_tensor += tf.random_uniform(noise_shape)
+    dropout_mask = tf.cast(tf.floor(random_tensor), dtype = tf.bool)
 
-    outputs = tf.sparse_retain(x, dropout_mask)
-    outputs = outputs * (1/keep_prob)
+    #Do the dropout
+    pre_out = tf.sparse_retain(x, dropout_mask)
+    out = pre_out * (1./keep_prob)
 
-    return outputs
-'''
+    return out
+
 
 def graph_conv(X, A, weights, X_is_sparse = False):
     '''
