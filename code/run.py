@@ -12,13 +12,13 @@ from model.gat import GAT
 from hyperpara_optim import *
 #from load_data import create_input
 
-learning_rate = 0.01 #0.01
+learning_rate = 0.1 #0.01
 epochs = 4000
 weight_decay = 0.003 #5e-1
 early_stopping = 100 #500
 activation_func = tf.nn.relu
 dropout_prob = 0.2 #0.5
-bias = True
+bias = False
 hidden_dim = 16
 optimizer = tf.train.AdamOptimizer
 
@@ -186,7 +186,7 @@ model = GAT(
     dropout_prob = dropout_prob,
     bias = bias,
     optimizer = optimizer,
-    attention_head = 3,
+    attention_head = 1,
     name='GAT'
 )
 

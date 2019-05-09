@@ -59,12 +59,12 @@ def mask_by_adj(mat, adj):
     Mask a matrix by the adjancy matrix 
     The adj is a sparse matrix
     '''
-    adj = tf.sparse_to_dense(adj)
+    adj = tf.sparse_to_dense(adj.indices, adj.dense_shape, adj.values)
     mask = tf.cast(adj, tf.bool)
-
+    mask = tf.cast(mask, tf.float32)
     #Element wise mul
 
-    return tf.math.multiply(mask, mat)
+    return tf.math.multiply(mat, mask)
 
 
         

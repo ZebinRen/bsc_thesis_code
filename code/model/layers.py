@@ -301,16 +301,23 @@ class GraphAttentionLayer(BaseLayer):
         #The number of weights and attention is equal to the number of attention heads
         self.weights = []
         self.attention = []
+        self.pre_weights = []
         with tf.variable_scope(self.name + '_var'): 
             #Add weights and attention
             for i in range(self.attention_head):
                 self.weights.append(glort_init([output_dim, input_dim], name = 'weights_' + str(i)))
+                self.pre_weights.append(glort_init([output_dim, input_dim], name = 'pre_weights_' + str(i)))
                 self.attention.append(tf.zeros([output_dim*2], name = 'attention_' + str(i)))
 
             
             #if bias is used
             if self.bias:
-                self.bias = tf.zeros([output_dim*attention_head], name = 'bias')
+                if aggregate_mode == 'concate':
+                    self.bias = tf.zeros([output_dim*attention_head], name = 'bias')
+                elif aggregate_mode == 'ave':
+                    self.bias = tf.zeros([output_dim], name = 'bias')
+                else:
+                    raise "Invalid value for aggregate_mode"
             
 
     def run(self, inputs, num_features_nonzero):
@@ -370,28 +377,39 @@ class GraphAttentionLayer(BaseLayer):
             attention_coffe.append(tf.matmul(diag, row_stack))
 
         #Mask the coeffcient matrix by adjancy matrix
-        #And use LeakeyRelu, 0.2
+        #And use LeakyRelu, 0.2
         #compute softmax over row
-        for i in range(self.attention_head):
+        for i in range(self.attention_head):     
             attention_coffe[i] = mask_by_adj(attention_coffe[i], self.adjancy)
-            attention_coffe[i] = tf.nn.leakey_relu(attention_coffe[i], alpha = 0.2)
+            attention_coffe[i] = tf.nn.leaky_relu(attention_coffe[i], alpha = 0.2)
             attention_coffe[i] = tf.nn.softmax(attention_coffe[i])
 
         #Compute the predct
         #For each attention coffecients matrix A and weight matrix W
         #output = WX_TA_T
         output = []
+        mid_value = None
         for i in range(self.attention_head):
-            output.append(tf.matmul(WX_T[i], tf.transpose(attention_coffe[i])))
+            if self.sparse:
+                mid_value = tf.sparse_tensor_dense_matmul(inputs, tf.transpose(self.pre_weights[i]))
+                mid_value = tf.transpose(mid_value)
+            else:
+                mid_value = tf.matmul(self.pre_weights[i], tf.transpose(inputs))
+                
+            output.append(tf.matmul(mid_value, tf.transpose(attention_coffe[i])))
+            
 
-        if self.aggregate_mode == 'conate':
+        if self.aggregate_mode == 'concate':
             #Concate the matrix
-            output = tf.stack(output)
-        if self.aggregate_mode == 'ave':
+            output = tf.concat(output, axis = 0)
+
+        elif self.aggregate_mode == 'ave':
             #Ave over output_matrix
             len_output = len(output)
             output = tf.add_n(output)
             output = output/len_output
+        else:
+            raise "aggregate_mode has a invalid value"
 
         #Transpose the output
         output = tf.transpose(output)
