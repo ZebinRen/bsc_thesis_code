@@ -66,6 +66,32 @@ def mask_by_adj(mat, adj):
 
     return tf.math.multiply(mat, mask)
 
+def create_power_series(a, degree, sparse = False):
+    '''
+    compute the power series if A
+    Used in dcnn
+    mat is the matrix 
+    degree is the degree of powers
+    '''
+
+    if sparse:
+        #If the matrix is sparse matrix, convert it to dense matrix
+        print(a)
+        print(a.dense_shape)
+        #exit()
+        a = tf.sparse_to_dense(a.indices, a.dense_shape, a.values, validate_indices=False)
+
+    pow_series = []
+    pow_series.append(a)
+
+    for i in range(degree - 1):
+        pow_series.append(tf.matmul(pow_series[-1], a))
+
+    return tf.stack(pow_series, 1)
+    
+
+
+
 
         
 

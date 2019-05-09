@@ -395,7 +395,7 @@ class GraphAttentionLayer(BaseLayer):
                 mid_value = tf.transpose(mid_value)
             else:
                 mid_value = tf.matmul(self.pre_weights[i], tf.transpose(inputs))
-                
+
             output.append(tf.matmul(mid_value, tf.transpose(attention_coffe[i])))
             
 
@@ -425,6 +425,90 @@ class GraphAttentionLayer(BaseLayer):
 
 
 
+class DiffusionLayer(BaseLayer):
+    '''
+    First Cheb Layer
+    Note that the adjancy matrix is not normalized
+    '''
+    def __init__(self,
+                 adjancy,
+                 input_dim, output_dim,
+                 activation_func,
+                 name,
+                 dropout_prob = None,
+                 bias = False,
+                 sparse = False,
+                 hops = 3):
+        super(DiffusionLayer, self).__init__(
+            input_dim, output_dim,
+            activation_func,
+            name,
+            dropout_prob,
+            bias,
+            sparse
+            )
+
+        self.adjancy = adjancy
+        self.hops = hops
+
+        #Define layer's variables
+        with tf.variable_scope(self.name + '_var'): 
+            self.weight_c = glort_init([self.hops, input_dim], name = 'weight_c')
+            self.weight_d = glort_init([self.hops * input_dim, output_dim], name = 'weight_d')
+
+
+            #if bias is used
+            if self.bias:
+                self.bias = tf.zeros([output_dim], name = 'bias')
+
+
+    def run(self, inputs, num_features_nonzero):
+        '''
+        Inputs are features or the output passed by the previous layer
+        This will connect each layers into one compution graph
+        '''
+
+
+        #Note, sparse drop is not implemented
+        #Since we assume that no dropout is implemented and the output of a layer is dense matrix
+        #Drop out to input can be implemented befor it is feeded to the train function 
+        if not self.dropout_prob:
+            pass
+
+        else:
+            if self.sparse:
+                inputs = sparse_dropout(inputs, 1 - self.dropout_prob, num_features_nonzero)
+                inputs = tf.sparse_to_dense(inputs.indices, inputs.dense_shape, inputs.values)
+            else:
+                inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+
+        #Shape Nt * H * Nt
+        pt_series = create_power_series(self.adjancy, self.hops, sparse=True)
+
+
+        #compute P_X
+        #dim (Nt*H*Nt) * (Nt*F)
+        P_X = tf.einsum('ijk,kl->ijl', pt_series , inputs)
+
+        #compute W_c (element-wise product) P_X
+        WPX = P_X * self.weight_c
+        WPX = tf.nn.tanh(WPX)
+
+        #flatten, let Z be a two-dim matrix Nt*(H*F)
+        Z = tf.contrib.layers.flatten(WPX)
+        print(Z)
+        print(self.weight_d)
+        print(self.bias)
+
+        output = tf.matmul(Z, self.weight_d)
+
+       
+        #bias
+        if self.bias != None:
+            output += self.bias
+
+        #acitvation
+        return self.activation_func(output)
 
 
         

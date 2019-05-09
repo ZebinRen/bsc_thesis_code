@@ -9,16 +9,17 @@ from model.gcn import GCN
 from model.mlp import MLP
 from model.firstcheb import FirstCheb
 from model.gat import GAT
+from model.dcnn import DCNN
 from hyperpara_optim import *
 #from load_data import create_input
 
-learning_rate = 0.1 #0.01
+learning_rate = 0.01 #0.01
 epochs = 4000
 weight_decay = 0.003 #5e-1
-early_stopping = 100 #500
+early_stopping = 20 #500
 activation_func = tf.nn.relu
 dropout_prob = 0.2 #0.5
-bias = False
+bias = True
 hidden_dim = 16
 optimizer = tf.train.AdamOptimizer
 
@@ -42,7 +43,7 @@ directed = create_load_sparse(directed)
 undirected = create_load_sparse(undirected)
 features = create_load_sparse(features)
 '''
-data, addi_parameters = create_input('gat', './data', 'citeseer', 1, 230, 500, None)
+data, addi_parameters = create_input('dcnn', './data', 'citeseer', 1, 230, 500, None)
 directed = data['directed']
 undirected = data['undirected']
 features = data['features']
@@ -174,7 +175,7 @@ print('test acucracy: ', accu)
 #Test first cheb finish
 '''
 
-
+'''
 #Test GAT
 
 model = GAT(
@@ -199,3 +200,25 @@ accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonz
 print('test acucracy: ', accu)
 
 #TEST GAT FINISH
+'''
+
+model = DCNN(
+    hidden_num = 1, hidden_dim = [hidden_dim],
+    **addi_parameters,
+    learning_rate = learning_rate, epochs = epochs,
+    weight_decay = weight_decay, early_stopping = early_stopping,
+    activation_func = activation_func,
+    dropout_prob = dropout_prob,
+    bias = bias,
+    optimizer = optimizer,
+    name='DCNN',
+    hops = 3
+)
+
+sess = tf.Session()
+
+model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
+
+
+accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
+print('test acucracy: ', accu)

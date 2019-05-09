@@ -102,6 +102,18 @@ def pre_GCN(directed, undirected):
 
     return sys_norm_directed, sys_norm_undirected
 
+def pre_DCNN(directed, undirected):
+    '''
+    Preprocess for dcnn
+    Build degree normalized transition matrix
+    '''
+    directed = row_normalized(directed)
+    undirected = row_normalized(undirected)
+
+    return directed, undirected
+
+
+
 
 
 def create_input(model_name, path, dataset_name, index, train_num, val_num, test_num = None):
@@ -122,7 +134,9 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
     #Preprocess adjancy for different models
     if 'gcn' == model_name:
         directed, undirected = pre_GCN(directed, undirected)
-    if 'gat' == model_name:
+    elif 'dcnn' == model_name:
+        directed, undirected = pre_DCNN(directed, undirected)
+    elif 'gat' == model_name:
         #directe, sys_norm_undirected
         pass
     else:
