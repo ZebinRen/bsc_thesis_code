@@ -131,11 +131,23 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
     input_dim = features.shape[1]
     output_dim = y_train.shape[1]
 
+
     #Preprocess adjancy for different models
     if 'gcn' == model_name:
         directed, undirected = pre_GCN(directed, undirected)
     elif 'dcnn' == model_name:
         directed, undirected = pre_DCNN(directed, undirected)
+    elif 'spectralcnn' == model_name:
+        #Convert to dense matrix
+        #only the undirected matrix is computed
+        #Since the directed adjancy is not used in any model
+        dense_undirected = sp.csr_matrix.todense(undirected)
+
+        #compute eigenvalue decompsition
+        undirected_evalues, undirected_evectors = np.linalg.eigh(dense_undirected)
+        undirected = [undirected_evalues, undirected_evectors]
+
+
     elif 'gat' == model_name:
         #directe, sys_norm_undirected
         pass
@@ -145,9 +157,20 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
     
     #Change scipy sparse matrix to the format that can be directly used by
     #the model
-    directed = create_load_sparse(directed)
-    undirected = create_load_sparse(undirected)
+    if 'spectralcnn' == model_name:
+        #Adjancy matrix is not used in these models
+        #The eigenvector is used
+        #directed = None
+        #print(undirected_evectors.shape)
+        #exit()
+        #undirected = [undirected_evalues, undirected_evectors]
+        pass
+    else:
+        directed = create_load_sparse(directed)
+        undirected = create_load_sparse(undirected)
+    
     features = create_load_sparse(features)
+
 
     dataset = {
         'directed': directed,

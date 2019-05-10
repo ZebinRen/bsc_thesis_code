@@ -10,17 +10,19 @@ from model.mlp import MLP
 from model.firstcheb import FirstCheb
 from model.gat import GAT
 from model.dcnn import DCNN
+from model.spectralcnn import SpectralCNN
 from hyperpara_optim import *
+import scipy.sparse as sp
 #from load_data import create_input
 
 learning_rate = 0.01 #0.01
 epochs = 4000
 weight_decay = 0.003 #5e-1
-early_stopping = 20 #500
+early_stopping = 2000 #500
 activation_func = tf.nn.relu
 dropout_prob = 0.2 #0.5
 bias = True
-hidden_dim = 16
+hidden_dim = 4
 optimizer = tf.train.AdamOptimizer
 
 '''
@@ -43,7 +45,7 @@ directed = create_load_sparse(directed)
 undirected = create_load_sparse(undirected)
 features = create_load_sparse(features)
 '''
-data, addi_parameters = create_input('dcnn', './data', 'citeseer', 1, 230, 500, None)
+data, addi_parameters = create_input('spectralcnn', './data', 'citeseer', 1, 230, 500, None)
 directed = data['directed']
 undirected = data['undirected']
 features = data['features']
@@ -202,6 +204,7 @@ print('test acucracy: ', accu)
 #TEST GAT FINISH
 '''
 
+'''
 model = DCNN(
     hidden_num = 1, hidden_dim = [hidden_dim],
     **addi_parameters,
@@ -222,3 +225,34 @@ model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, nu
 
 accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
 print('test acucracy: ', accu)
+'''
+
+#TEST SpectralCNN
+undirected = undirected[1]
+#print(undirected)
+#print(undirected.shape)
+#exit()
+
+
+model = SpectralCNN(
+    hidden_num = 1, hidden_dim = [hidden_dim],
+    **addi_parameters,
+    learning_rate = learning_rate, epochs = epochs,
+    weight_decay = weight_decay, early_stopping = early_stopping,
+    activation_func = activation_func,
+    dropout_prob = dropout_prob,
+    bias = bias,
+    optimizer = optimizer,
+    name='SpectralCNN',
+)
+
+sess = tf.Session()
+
+model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
+
+
+accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
+print('test acucracy: ', accu)
+
+
+#TEST SpectralCNN finish

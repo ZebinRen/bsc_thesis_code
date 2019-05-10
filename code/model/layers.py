@@ -511,6 +511,96 @@ class DiffusionLayer(BaseLayer):
         return self.activation_func(output)
 
 
+
+
+
+class SpectralCNNLayer(BaseLayer):
+    '''
+    Dense Layer
+    '''
+    def __init__(self,
+                 eigenvalue_matrix,
+                 input_dim, output_dim,
+                 activation_func,
+                 name,
+                 dropout_prob = None,
+                 bias = False,
+                 sparse = False,
+                 total_nodes = None):
+        super(SpectralCNNLayer, self).__init__(
+                                            input_dim, output_dim,
+                                            activation_func,
+                                            name,
+                                            dropout_prob,
+                                            bias,
+                                            sparse
+                                            )
+
+        self.ei_mat = eigenvalue_matrix
+        self.total_nodes = total_nodes
+
+        #Define layer's variables
+        with tf.variable_scope(self.name + '_var'):
+            self.weights_list = []
+            for i in range(output_dim): 
+                self.weights_list.append(glort_init([total_nodes, input_dim], name = 'weights' + str(i)))
+            
+            #Stack self.weights as a single three-dim vector
+            self.weights = tf.stack(self.weights_list, axis=0)
+
+
+            #if bias is used
+            if self.bias:
+                self.bias = tf.zeros([output_dim], name = 'bias')
+
+
+    def run(self, inputs, num_features_nonzero):
+        '''
+        Inputs are features or the output passed by the previous layer
+        This will connect each layers into one compution graph
+        '''
+
+
+        #Note, sparse drop is not implemented
+        #Since we assume that no dropout is implemented and the output of a layer is dense matrix
+        #Drop out to input can be implemented befor it is feeded to the train function 
+        if not self.dropout_prob:
+            pass
+
+        else:
+            if self.sparse:
+                inputs = sparse_dropout(inputs, 1 - self.dropout_prob, num_features_nonzero)
+            else:
+                inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+
+
+        #Do the calculation
+        if self.sparse:
+            X_TV = tf.sparse_tensor_dense_matmul(tf.sparse.transpose(inputs), self.ei_mat)
+            V_TX = tf.transpose(X_TV)
+        else:
+            V_TX = tf.matmul(tf.transpose(self.ei_mat), inputs)
+
+        WV_TX = V_TX * self.weights
+
+        output = tf.einsum('jk,ikl->ijl', self.ei_mat , WV_TX)
+
+        #Output shape is output_dim, total_nodes, input_dim
+        #Add over input features
+        #output_dim, total_nodes
+        #Add over total_nodes
+        output = tf.reduce_sum(output, 2)
+        output = tf.transpose(output)
+
+
+        #bias
+        if self.bias != None:
+            output += self.bias
+
+        #acitvation
+        return self.activation_func(output)
+
+
         
 
 
