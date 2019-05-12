@@ -372,9 +372,10 @@ class GraphAttentionLayer(BaseLayer):
         attention_coffe = []
 
         for i in range(self.attention_head):
-            diag = tf.matrix_diag(AWX_T_1[i])
-            row_stack = tf.stack([AWX_T_2[i]] * self.total_nodes)
-            attention_coffe.append(tf.matmul(diag, row_stack))
+            first = tf.stack(AWX_T_1[i]*self.total_nodes)
+            first = tf.transpose(first)
+            second = tf.stack([AWX_T_2[i]] * self.total_nodes)
+            attention_coffe.append(tf.add(first, second))
 
         #Mask the coeffcient matrix by adjancy matrix
         #And use LeakyRelu, 0.2

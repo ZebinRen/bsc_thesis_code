@@ -16,7 +16,7 @@ from hyperpara_optim import *
 import scipy.sparse as sp
 
 #The model name used for test
-model_name = 'chebnet'
+model_name = 'gat'
 test_search_hpara = False
 
 #Hyperparameters
