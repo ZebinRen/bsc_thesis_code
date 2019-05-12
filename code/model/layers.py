@@ -601,6 +601,90 @@ class SpectralCNNLayer(BaseLayer):
         return self.activation_func(output)
 
 
+
+
+
+class ChebLayer(BaseLayer):
+    '''
+    ChebLayer: Compute cheblayer
+    '''
+    def __init__(self,
+                 adjancy,
+                 input_dim, output_dim,
+                 activation_func,
+                 name,
+                 dropout_prob = None,
+                 bias = False,
+                 sparse = False,
+                 poly_order = None):
+        super(ChebLayer, self).__init__(
+                input_dim, output_dim,
+                activation_func,
+                name,
+                dropout_prob,
+                bias,
+                sparse
+                )
+
+        self.adjancy = adjancy
+        self.poly_order = poly_order
+
+        #Compute the cheb polynimials
+        self.series = self.adjancy
+
+        #Define layer's variables
+        self.weights_list = []
+        with tf.variable_scope(self.name + '_var'):
+            for i in range(self.poly_order):
+                self.weights_list.append(glort_init([self.input_dim, self.output_dim], name = 'weights' + str(i)))
+
+
+            #if bias is used
+            if self.bias:
+                self.bias = tf.zeros([output_dim], name = 'bias')
+
+
+    def run(self, inputs, num_features_nonzero):
+        '''
+        Inputs are features or the output passed by the previous layer
+        This will connect each layers into one compution graph
+        '''
+
+
+        #Note, sparse drop is not implemented
+        #Since we assume that no dropout is implemented and the output of a layer is dense matrix
+        #Drop out to input can be implemented befor it is feeded to the train function 
+        if not self.dropout_prob:
+            pass
+
+        else:
+            if self.sparse:
+                inputs = sparse_dropout(inputs, 1 - self.dropout_prob, num_features_nonzero)
+            else:
+                inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+
         
+        #compute XW
+        if self.sparse:
+            for i in range(self.poly_order):
+                self.weights_list[i] = tf.sparse_tensor_dense_matmul(inputs, self.weights_list[i])
+        else:
+            for i in range(self.poly_order):
+                self.weights_list[i] = tf.matmul(inputs, self.weights_list[i])
+
+        #compute TXW
+        TXW = []
+        for i in range(self.poly_order):
+            TXW.append(tf.sparse_tensor_dense_matmul(self.series[i], self.weights_list[i]))
+
+        output = tf.add_n(TXW)
+
+
+        #bias
+        if self.bias != None:
+            output += self.bias
+
+        #acitvation
+        return self.activation_func(output)
 
 

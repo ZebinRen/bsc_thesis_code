@@ -88,7 +88,12 @@ def create_power_series(a, degree, sparse = False):
         pow_series.append(tf.matmul(pow_series[-1], a))
 
     return tf.stack(pow_series, 1)
-    
+
+
+
+
+
+
 
 
 

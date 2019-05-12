@@ -11,41 +11,33 @@ from model.firstcheb import FirstCheb
 from model.gat import GAT
 from model.dcnn import DCNN
 from model.spectralcnn import SpectralCNN
+from model.chebnet import ChebNet
 from hyperpara_optim import *
 import scipy.sparse as sp
-#from load_data import create_input
 
-learning_rate = 0.01 #0.01
+#The model name used for test
+model_name = 'chebnet'
+test_search_hpara = False
+
+#Hyperparameters
+learning_rate = 0.001 #0.01
 epochs = 4000
-weight_decay = 0.003 #5e-1
-early_stopping = 2000 #500
+weight_decay = 0 #5e-1
+early_stopping = 100 #500
 activation_func = tf.nn.relu
 dropout_prob = 0.2 #0.5
 bias = True
-hidden_dim = 4
+hidden_dim = 32
 optimizer = tf.train.AdamOptimizer
 
-'''
-directed, undirected, features, y_train, y_val, y_test, train_mask, val_mask, test_mask,\
-info = create_input('./data', 'citeseer', 1, 230, 500, None)
 
-#preprocess the adjancy matrix for GCN
-directed = symmetric_normalized_laplacian(directed)
-undirected = symmetric_normalized_laplacian(undirected)
+#hyperparameter for ChebNet 
+poly_order = 2
 
-#preprocess features
-norm_features = row_normalized(features)
 
-#information
-nodes = directed.shape[0]
-input_dim = features.shape[1]
-output_dim = y_train.shape[1]
 
-directed = create_load_sparse(directed)
-undirected = create_load_sparse(undirected)
-features = create_load_sparse(features)
-'''
-data, addi_parameters = create_input('spectralcnn', './data', 'citeseer', 1, 230, 500, None)
+#load data
+data, addi_parameters = create_input(model_name, './data', 'citeseer', 1, 230, 500, None)
 directed = data['directed']
 undirected = data['undirected']
 features = data['features']
@@ -57,12 +49,18 @@ val_mask = data['val_mask']
 test_mask = data['test_mask']
 num_featuers_nonzero = features[1].shape
 
+
+
+
+
+
+
 '''
 #Test random search
 dataset = create_train_feed(data)
 
 para_set, para_accu = random_search(GCN, dataset, search_parameter, fixed_parameter, addi_parameters, random_times = 10,
-	evaluate_times = 3)
+    evaluate_times = 3)
 
 print(para_set)
 print(para_accu)
@@ -91,168 +89,197 @@ print('test acucracy: ', accu)
 #Test random search finish
 '''
 
-'''
+
 #Test GCN
-
-
-
-#directed = pre_out * (1./(1- dropout_prob))
-'''
-'''
-
+if model_name == 'gcn':
 #Create model
-model = GCN(
-    hidden_num = 1, hidden_dim = [hidden_dim],
-    **addi_parameters,
-    learning_rate = learning_rate, epochs = epochs,
-    weight_decay = weight_decay, early_stopping = early_stopping,
-    activation_func = activation_func,
-    dropout_prob = dropout_prob,
-    bias = bias,
-    optimizer = optimizer,
-    name='GCN'
-)
+    model = GCN(
+        hidden_num = 1, hidden_dim = [hidden_dim],
+        **addi_parameters,
+        learning_rate = learning_rate, epochs = epochs,
+        weight_decay = weight_decay, early_stopping = early_stopping,
+        activation_func = activation_func,
+        dropout_prob = dropout_prob,
+        bias = bias,
+        optimizer = optimizer,
+        name='GCN'
+    )
 
-sess = tf.Session()
+    sess = tf.Session()
 
-model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
+    model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
-print('test acucracy: ', accu)
+    accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
+    print('test acucracy: ', accu)
 
 #Test GCN finish
-'''
 
 
-'''
+
+
 #Test MLP
+elif model_name == 'mlp':
+    #Create model
+    model = MLP(
+        hidden_num = 1, hidden_dim = [hidden_dim],
+        **addi_parameters,
+        learning_rate = learning_rate, epochs = epochs,
+        weight_decay = weight_decay, early_stopping = early_stopping,
+        activation_func = activation_func,
+        dropout_prob = dropout_prob,
+        bias = bias,
+        optimizer = optimizer,
+        name='MLP'
+    )
 
-#Create model
-model = MLP(
-    hidden_num = 1, hidden_dim = [hidden_dim],
-    **addi_parameters,
-    learning_rate = learning_rate, epochs = epochs,
-    weight_decay = weight_decay, early_stopping = early_stopping,
-    activation_func = activation_func,
-    dropout_prob = dropout_prob,
-    bias = bias,
-    optimizer = optimizer,
-    name='MLP'
-)
+    sess = tf.Session()
 
-sess = tf.Session()
-
-model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
+    model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
-print('test acucracy: ', accu)
+    accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
+    print('test acucracy: ', accu)
 
 #Test MLP finish
-'''
 
-'''
+
 #Test first cheb
+elif model_name == 'firstcheb':
+    #print('#####', num_featuers_nonzero)
+    #exit()
+    
+    model = FirstCheb(
+        hidden_num = 1, hidden_dim = [hidden_dim],
+        **addi_parameters,
+        learning_rate = learning_rate, epochs = epochs,
+        weight_decay = weight_decay, early_stopping = early_stopping,
+        activation_func = activation_func,
+        dropout_prob = dropout_prob,
+        bias = bias,
+        optimizer = optimizer,
+        name='FirstCheb'
+    )
 
-model = FirstCheb(
-    hidden_num = 1, hidden_dim = [hidden_dim],
-    **addi_parameters,
-    learning_rate = learning_rate, epochs = epochs,
-    weight_decay = weight_decay, early_stopping = early_stopping,
-    activation_func = activation_func,
-    dropout_prob = dropout_prob,
-    bias = bias,
-    optimizer = optimizer,
-    name='FirstCheb'
-)
-
-sess = tf.Session()
-
-model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
+    sess = tf.Session()
+    
+    model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
-print('test acucracy: ', accu)
+    accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
+    print('test acucracy: ', accu)
 #Test first cheb finish
-'''
 
-'''
+
+
 #Test GAT
+elif model_name =='gat':
+    model = GAT(
+        hidden_num = 1, hidden_dim = [hidden_dim],
+        **addi_parameters,
+        learning_rate = learning_rate, epochs = epochs,
+        weight_decay = weight_decay, early_stopping = early_stopping,
+        activation_func = activation_func,
+        dropout_prob = dropout_prob,
+        bias = bias,
+        optimizer = optimizer,
+        attention_head = 1,
+        name='GAT'
+    )
 
-model = GAT(
-    hidden_num = 1, hidden_dim = [hidden_dim],
-    **addi_parameters,
-    learning_rate = learning_rate, epochs = epochs,
-    weight_decay = weight_decay, early_stopping = early_stopping,
-    activation_func = activation_func,
-    dropout_prob = dropout_prob,
-    bias = bias,
-    optimizer = optimizer,
-    attention_head = 1,
-    name='GAT'
-)
+    sess = tf.Session()
 
-sess = tf.Session()
-
-model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
+    model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
-print('test acucracy: ', accu)
+    accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
+    print('test acucracy: ', accu)
 
 #TEST GAT FINISH
-'''
-
-'''
-model = DCNN(
-    hidden_num = 1, hidden_dim = [hidden_dim],
-    **addi_parameters,
-    learning_rate = learning_rate, epochs = epochs,
-    weight_decay = weight_decay, early_stopping = early_stopping,
-    activation_func = activation_func,
-    dropout_prob = dropout_prob,
-    bias = bias,
-    optimizer = optimizer,
-    name='DCNN',
-    hops = 3
-)
-
-sess = tf.Session()
-
-model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
-print('test acucracy: ', accu)
-'''
+#TEST DCNN
+elif model_name == 'dcnn':
+    model = DCNN(
+        hidden_num = 1, hidden_dim = [hidden_dim],
+        **addi_parameters,
+        learning_rate = learning_rate, epochs = epochs,
+        weight_decay = weight_decay, early_stopping = early_stopping,
+        activation_func = activation_func,
+        dropout_prob = dropout_prob,
+        bias = bias,
+        optimizer = optimizer,
+        name='DCNN',
+        hops = 3
+    )
+
+    sess = tf.Session()
+
+    model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
+
+
+    accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
+    print('test acucracy: ', accu)
+
+#TEST DCNN FINISHED
 
 #TEST SpectralCNN
-undirected = undirected[1]
-#print(undirected)
-#print(undirected.shape)
-#exit()
+elif model_name == 'dcnn':
+    undirected = undirected[1]
+
+    model = SpectralCNN(
+        hidden_num = 1, hidden_dim = [hidden_dim],
+        **addi_parameters,
+        learning_rate = learning_rate, epochs = epochs,
+        weight_decay = weight_decay, early_stopping = early_stopping,
+        activation_func = activation_func,
+        dropout_prob = dropout_prob,
+        bias = bias,
+        optimizer = optimizer,
+        name='SpectralCNN',
+    )
+
+    sess = tf.Session()
+
+    model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-model = SpectralCNN(
-    hidden_num = 1, hidden_dim = [hidden_dim],
-    **addi_parameters,
-    learning_rate = learning_rate, epochs = epochs,
-    weight_decay = weight_decay, early_stopping = early_stopping,
-    activation_func = activation_func,
-    dropout_prob = dropout_prob,
-    bias = bias,
-    optimizer = optimizer,
-    name='SpectralCNN',
-)
-
-sess = tf.Session()
-
-model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
-
-
-accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
-print('test acucracy: ', accu)
-
+    accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
+    print('test acucracy: ', accu)
 
 #TEST SpectralCNN finish
+
+
+#Test chebnet
+elif model_name == 'chebnet':
+	#create chebnet input
+    cheb_series = create_cheb_series(undirected, poly_order, self_loop=True)
+    undirected = cheb_series
+
+    model = ChebNet(
+        hidden_num = 1, hidden_dim = [hidden_dim],
+        **addi_parameters,
+        learning_rate = learning_rate, epochs = epochs,
+        weight_decay = weight_decay, early_stopping = early_stopping,
+        activation_func = activation_func,
+        dropout_prob = dropout_prob,
+        bias = bias,
+        optimizer = optimizer,
+        name='SpectralCNN',
+        poly_order = poly_order
+    )
+
+    sess = tf.Session()
+
+    model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
+
+
+    accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
+    print('test acucracy: ', accu)
+
+
+
+#Test chebnet finish
+
+else:
+	pass

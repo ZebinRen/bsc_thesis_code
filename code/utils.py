@@ -3,6 +3,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from load_data import create_raw_input
+from scipy.sparse.linalg.eigen.arpack import eigsh
 
 
 def create_load_sparse(sparse_mat):
@@ -112,6 +113,53 @@ def pre_DCNN(directed, undirected):
 
     return directed, undirected
 
+def create_cheb_series(adjancy, poly_order, self_loop=True):
+    '''
+    Used to build ChebNet input
+    compute cheb_series
+    Used in ChebNet
+    input is sparse matrix
+    this should be processed before it is feeded into the model
+    using numpy
+    self_loop: if the adjancy matrix has a selfloop
+    '''
+
+    ##Normalize adjancy
+    ##L= D - W
+    ##D is row_sum
+    W = symmetric_normalized_laplacian(adjancy)
+    W = sp.coo_matrix(adjancy)
+    D = np.array(W.sum(1))
+    D = D.flatten()
+    shape = W.shape
+
+    L = sp.diags(D) - W
+
+    if self_loop:
+        L = L + sp.eye(shape[0])
+
+    #Get the largest eigenvalue
+    l_ev = eigsh(L + L.T,1,which='LA')[0]
+    l_ev = l_ev[0]
+    print(l_ev)
+    #exit()
+    #l_ev = 1
+
+    L_hat = (2*L)/l_ev - sp.eye(shape[1])
+
+    cheb_series = []
+
+    cheb_series.append(sp.eye(shape[0]))
+    cheb_series.append(L_hat)
+
+    for i in range(2, poly_order):
+        L_cp = sp.csr_matrix(L, copy=True)
+        res = 2*L_cp.dot(cheb_series[-1]) - cheb_series[-2]
+        cheb_series.append(res)
+
+    undirected = [create_load_sparse(item) for item in cheb_series]
+
+    return undirected
 
 
 
@@ -146,7 +194,8 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
         #compute eigenvalue decompsition
         undirected_evalues, undirected_evectors = np.linalg.eigh(dense_undirected)
         undirected = [undirected_evalues, undirected_evectors]
-
+    elif 'chebnet' == model_name:
+        pass
 
     elif 'gat' == model_name:
         #directe, sys_norm_undirected
@@ -164,6 +213,8 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
         #print(undirected_evectors.shape)
         #exit()
         #undirected = [undirected_evalues, undirected_evectors]
+        pass
+    elif 'chebnet' == model_name:
         pass
     else:
         directed = create_load_sparse(directed)
