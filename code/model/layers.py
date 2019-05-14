@@ -1,6 +1,7 @@
 import tensorflow as tf
 import scipy.sparse as sp
 from .layer_utils import *
+import numpy as np
 
 class BaseLayer(object):
     def __init__(self,
@@ -94,6 +95,7 @@ class GraphConvLayer(BaseLayer):
             if self.bias:
                 self.bias = tf.zeros([output_dim], name = 'bias')
                 self.weight_decay_vars.append(self.bias)    
+
     def run(self, inputs, num_features_nonzero = None):
         '''
         Inputs are features, Since the feateure map will change through the network
@@ -146,11 +148,13 @@ class DenseLayer(BaseLayer):
         #Define layer's variables
         with tf.variable_scope(self.name + '_var'): 
             self.weights = glort_init([input_dim, output_dim], name = 'weights')
+            self.weight_decay_vars.append(self.weights)
 
 
             #if bias is used
             if self.bias:
                 self.bias = tf.zeros([output_dim], name = 'bias')
+                self.weight_decay_vars.append(self.bias)
 
 
     def run(self, inputs, num_features_nonzero):
@@ -617,7 +621,8 @@ class ChebLayer(BaseLayer):
                  dropout_prob = None,
                  bias = False,
                  sparse = False,
-                 poly_order = None):
+                 poly_order = None,
+                 ):
         super(ChebLayer, self).__init__(
                 input_dim, output_dim,
                 activation_func,
@@ -689,3 +694,96 @@ class ChebLayer(BaseLayer):
         return self.activation_func(output)
 
 
+
+class MeanLayer(BaseLayer):
+    '''
+    Two layer GCN
+    Semi-Supervised Classfication with Graph Convolution Networks, Kipf
+    Model:
+        Z = f(X, A) = softmax(A RELU(AXW(0))W(1))
+    A = D^-0.5 L D^-0.5 (Renomalized Laplacian)
+    X is the feature matrix
+    NOTE: There is no bias or dropout in the orgin model
+    
+    '''
+    def __init__(self,
+                 adjancy,
+                 input_dim, output_dim,
+                 activation_func,
+                 name,
+                 dropout_prob = None,
+                 bias = False,
+                 sparse = False,
+                 degrees = None):
+        super(MeanLayer, self).__init__(
+            input_dim, output_dim,
+            activation_func,
+            name,
+            dropout_prob,
+            bias,
+            sparse
+            )
+
+        self.adjancy = adjancy
+        self.degrees = degrees
+
+        
+        #Define layers' variable
+        with tf.variable_scope(self.name + '_var'):
+            self.weights = glort_init([input_dim, output_dim], name = 'weights')
+            self.weight_decay_vars.append(self.weights)
+            self.skip_weights = glort_init([self.input_dim, output_dim], name = 'skip_weights')
+            self.weight_decay_vars.append(self.skip_weights)
+        
+        #If bias is used
+            if self.bias:
+                self.bias = tf.zeros([output_dim], name = 'bias')
+                self.weight_decay_vars.append(self.bias)    
+    def run(self, inputs, num_features_nonzero = None):
+        '''
+        Inputs are features, Since the feateure map will change through the network
+        The symmertic normalized Laplacian matrix at the first layer
+        Then the convoluted matrix in the following layers
+        '''
+        if not self.dropout_prob:
+            pass
+
+        else:
+            if self.sparse:
+                inputs = sparse_dropout(inputs, 1 - self.dropout_prob, num_features_nonzero)
+            else:
+                inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+        
+        #Multiply it by weight matrix
+        if self.sparse:
+            x = tf.sparse_tensor_dense_matmul(inputs, self.weights)
+        else:
+            x = tf.matmul(inputs, self.weights)
+
+        #multiply it by adjancy matrix
+        x = tf.sparse_tensor_dense_matmul(self.adjancy, x)
+
+        #Divide by degree
+        x = x/self.degrees
+
+
+        #Compute skipped features
+        if self.sparse:
+            skipped_features = tf.sparse_tensor_dense_matmul(inputs, self.skip_weights)
+        else:
+            skipped_features = tf.matmul(inputs, self.skip_weights)
+
+        x = x + skipped_features
+
+        if self.bias != None:
+            x += self.bias
+
+        normalizer = tf.norm(x, ord=2, axis=1, keepdims=True)
+        normalizer = tf.clip_by_value(normalizer, clip_value_min=1.0, clip_value_max=np.inf)
+        #print('###', normalizer)
+        #exit()
+        #output = x / normalizer
+        output = x
+
+        #activation
+        return self.activation_func(output)

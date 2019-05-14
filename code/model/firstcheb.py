@@ -3,6 +3,8 @@ from .base_model import BaseModel
 from .layers import *
 from .model_utils import *
 
+import time
+
 class FirstCheb(BaseModel):
     def __init__(self,
          hidden_num, hidden_dim,
@@ -162,6 +164,9 @@ class FirstCheb(BaseModel):
         '''
         Test the model, return accuracy
         '''
+
+        t_start = time.time()
+
         feed_dict = {
             self.adjancy: adj, 
             self.inputs: features,
@@ -172,4 +177,6 @@ class FirstCheb(BaseModel):
 
         accu = sess.run(self.accuracy, feed_dict=feed_dict)
 
-        return accu
+        t_end = time.time()
+
+        return accu, t_statr - t_end

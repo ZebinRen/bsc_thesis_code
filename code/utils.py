@@ -181,7 +181,7 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
 
 
     #Preprocess adjancy for different models
-    if 'gcn' == model_name:
+    if 'gcn' == model_name or 'firstcheb' == model_name:
         directed, undirected = pre_GCN(directed, undirected)
     elif 'dcnn' == model_name:
         directed, undirected = pre_DCNN(directed, undirected)
@@ -200,6 +200,8 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
     elif 'gat' == model_name:
         #directe, sys_norm_undirected
         pass
+    elif 'graphsage' == model_name:
+        pass
     else:
         raise 'There is no model named: ' + model_name
 
@@ -215,6 +217,8 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
         #undirected = [undirected_evalues, undirected_evectors]
         pass
     elif 'chebnet' == model_name:
+        pass
+    elif 'graphsage' == model_name:
         pass
     else:
         directed = create_load_sparse(directed)

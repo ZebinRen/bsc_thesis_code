@@ -3,6 +3,8 @@ from .base_model import BaseModel
 from .layers import *
 from .model_utils import *
 
+import time
+
 class DCNN(BaseModel):
     def __init__(self,
          hidden_num, hidden_dim,
@@ -166,6 +168,8 @@ class DCNN(BaseModel):
         '''
         Test the model, return accuracy
         '''
+        t_strat = time.time()
+
         feed_dict = {
             self.adjancy: adj, 
             self.inputs: features,
@@ -176,4 +180,6 @@ class DCNN(BaseModel):
 
         accu = sess.run(self.accuracy, feed_dict=feed_dict)
 
-        return accu
+        t_end = time.time()
+
+        return accu, t_strat-t_end

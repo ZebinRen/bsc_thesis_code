@@ -16,8 +16,8 @@ from model.gcn import GCN
 random_times = 50
 evaluate_times = 3
 
-model_list = [GCN, MLP]
-model_name_list = ['gcn', 'mlp']
+model_list = [MLP, GCN, ]
+model_name_list = [mlp, gcn, ]
 
 dataset_path = './data'
 dataset_name = 'citeseer'

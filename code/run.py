@@ -12,20 +12,22 @@ from model.gat import GAT
 from model.dcnn import DCNN
 from model.spectralcnn import SpectralCNN
 from model.chebnet import ChebNet
+from model.graphsage import GraphSage
 from hyperpara_optim import *
 import scipy.sparse as sp
+import numpy as np
 
 #The model name used for test
-model_name = 'gat'
+model_name = 'graphsage'
 test_search_hpara = False
 
 #Hyperparameters
 learning_rate = 0.001 #0.01
 epochs = 4000
-weight_decay = 0 #5e-1
-early_stopping = 100 #500
+weight_decay = 5e-5 #5e-1
+early_stopping = 30 #500
 activation_func = tf.nn.relu
-dropout_prob = 0.2 #0.5
+dropout_prob = 0.1 #0.5
 bias = True
 hidden_dim = 32
 optimizer = tf.train.AdamOptimizer
@@ -110,7 +112,7 @@ if model_name == 'gcn':
     model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-    accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
+    accu, time_used = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
     print('test acucracy: ', accu)
 
 #Test GCN finish
@@ -138,7 +140,7 @@ elif model_name == 'mlp':
     model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-    accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
+    accu, time_used = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
     print('test acucracy: ', accu)
 
 #Test MLP finish
@@ -166,7 +168,7 @@ elif model_name == 'firstcheb':
     model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-    accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
+    accu, time_used = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
     print('test acucracy: ', accu)
 #Test first cheb finish
 
@@ -218,13 +220,13 @@ elif model_name == 'dcnn':
     model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-    accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
+    accum, time_used = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
     print('test acucracy: ', accu)
 
 #TEST DCNN FINISHED
 
 #TEST SpectralCNN
-elif model_name == 'dcnn':
+elif model_name == 'spectralcnn':
     undirected = undirected[1]
 
     model = SpectralCNN(
@@ -244,7 +246,7 @@ elif model_name == 'dcnn':
     model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-    accu = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
+    accu, time_used = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
     print('test acucracy: ', accu)
 
 #TEST SpectralCNN finish
@@ -280,6 +282,34 @@ elif model_name == 'chebnet':
 
 
 #Test chebnet finish
+
+#Test graphsage
+elif model_name == 'graphsage':
+    degrees = np.array(undirected.sum(1))
+    undirected = create_load_sparse(undirected)
+
+    model = GraphSage(
+        hidden_num = 1, hidden_dim = [hidden_dim],
+        **addi_parameters,
+        learning_rate = learning_rate, epochs = epochs,
+        weight_decay = weight_decay, early_stopping = early_stopping,
+        activation_func = activation_func,
+        dropout_prob = dropout_prob,
+        bias = bias,
+        optimizer = optimizer,
+        name='GraphSage'
+    )
+
+    sess = tf.Session()
+
+    model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero, degrees)
+
+
+    accu, time_used = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero, degrees)
+    print('test acucracy: ', accu)
+
+#Test graphsage finish
+
 
 else:
 	pass
