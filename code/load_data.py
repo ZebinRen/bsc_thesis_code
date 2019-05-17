@@ -25,7 +25,7 @@ def load_data(path, dataset_name, index):
     #Create the name list of the data file
     name_list = []
     for name in name_list_origin:
-        name_list.append(dataset_name + '_' + name + '_' + str(index))
+        name_list.append(dataset_name + '_' + name + '_' + index)
     
     #Read file
     data_list = []

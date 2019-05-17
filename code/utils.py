@@ -80,6 +80,7 @@ def create_train_feed(dataset, directed = False):
     features = dataset['features']
     y_train = dataset['train_label']
     y_val = dataset['val_label']
+    num_features_nonzero = features[1].shape
 
     train_mask = dataset['train_mask']
     val_mask = dataset['val_mask']
@@ -89,7 +90,8 @@ def create_train_feed(dataset, directed = False):
         'train_label': y_train, 
         'val_label': y_val, 
         'train_mask': train_mask, 
-        'val_mask': val_mask
+        'val_mask': val_mask,
+        'num_features_nonzero': num_features_nonzero
     }
 
     return dataset
@@ -169,7 +171,7 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
     This will create the input that can be directly feed to the neural network
     '''
     directed, undirected, features, y_train, y_val, y_test, train_mask, val_mask, test_mask,\
-    info = create_raw_input('./data', 'citeseer', 1, 230, 500, None)
+    info = create_raw_input('./data', 'citeseer', index, 230, 500, None)
 
     #preprocess features
     norm_features = row_normalized(features)
@@ -196,11 +198,12 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
         undirected = [undirected_evalues, undirected_evectors]
     elif 'chebnet' == model_name:
         pass
-
     elif 'gat' == model_name:
         #directe, sys_norm_undirected
         pass
     elif 'graphsage' == model_name:
+        pass
+    elif 'mlp' == model_name:
         pass
     else:
         raise 'There is no model named: ' + model_name

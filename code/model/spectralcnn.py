@@ -106,9 +106,11 @@ class SpectralCNN(BaseModel):
         Train the model
         '''
         #Loss: Saves a list of the loss
-        loss_list = []
-        cost_list = []
-        acc_list = []
+        train_loss_list = []
+        train_acc_list = []
+        val_loss_list = []
+        val_acc_list = []
+        
         #Construct the feed dict
         feed_dict = {
           self.adjancy: adj,
@@ -132,18 +134,24 @@ class SpectralCNN(BaseModel):
         for epoch in range(self.epochs):
 
             loss, train_accu,  _ = sess.run([self.loss, self.accuracy, self.opt_op],  feed_dict=feed_dict)
-            loss_list.append(loss)
+            train_loss_list.append(loss)
+            train_acc_list.append(train_accu)
 
             cost, val_accu = sess.run([self.loss, self.accuracy], feed_dict=feed_dict_val)
-            cost_list.append(cost)
-            acc_list.append(val_accu)
+            val_loss_list.append(cost)
+            val_acc_list.append(val_accu)
 
             print('epochs: ', epoch, 'loss: ', loss, 'train_accu: ', train_accu, 'cost: ', cost, train_accu, 'accuracy: ',  val_accu)
             
             #Test early stopping
-            if early_stopping(cost_list, epoch, self.early_stopping):
+            if early_stopping(val_acc_list, epoch, self.early_stopping):
                 print("Early stopping")
                 break
+
+        train_info = {'train_loss': train_loss_list, 'train_acc': train_acc_list,
+            'val_loss': val_loss_list, 'val_acc': val_acc_list}
+
+        return train_info
 
 
     

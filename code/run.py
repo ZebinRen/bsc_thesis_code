@@ -23,11 +23,11 @@ test_search_hpara = False
 
 #Hyperparameters
 learning_rate = 0.001 #0.01
-epochs = 4000
-weight_decay = 5e-5 #5e-1
-early_stopping = 30 #500
+epochs = 400
+weight_decay = 0.02 #5e-1
+early_stopping = 300 #500
 activation_func = tf.nn.relu
-dropout_prob = 0.1 #0.5
+dropout_prob = 0.2 #0.5
 bias = True
 hidden_dim = 32
 optimizer = tf.train.AdamOptimizer
@@ -39,7 +39,7 @@ poly_order = 2
 
 
 #load data
-data, addi_parameters = create_input(model_name, './data', 'citeseer', 1, 230, 500, None)
+data, addi_parameters = create_input(model_name, './data', 'citeseer', '0', 230, 500, None)
 directed = data['directed']
 undirected = data['undirected']
 features = data['features']

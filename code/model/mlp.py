@@ -2,6 +2,7 @@ import tensorflow as tf
 from .base_model import BaseModel
 from .layers import *
 from .model_utils import *
+import time
 
 class MLP(BaseModel):
     def __init__(self,
@@ -100,9 +101,10 @@ class MLP(BaseModel):
         Train the model
         '''
         #Loss: Saves a list of the loss
-        loss_list = []
-        cost_list = []
-        acc_list = []
+        train_loss_list = []
+        train_acc_list = []
+        val_loss_list = []
+        val_acc_list = []
         #Construct the feed dict
         feed_dict = {
           self.adjancy: adj,
@@ -117,7 +119,7 @@ class MLP(BaseModel):
           self.inputs: features,
           self.label: val_label,
           self.mask: val_mask,
-          self.num_features_nonzero: num_features_nonzero  
+          self.num_features_nonzero: num_features_nonzero       
         }
 
         sess.run(tf.global_variables_initializer())
@@ -126,18 +128,24 @@ class MLP(BaseModel):
         for epoch in range(self.epochs):
 
             loss, train_accu,  _ = sess.run([self.loss, self.accuracy, self.opt_op],  feed_dict=feed_dict)
-            loss_list.append(loss)
+            train_loss_list.append(loss)
+            train_acc_list.append(train_accu)
 
             cost, val_accu = sess.run([self.loss, self.accuracy], feed_dict=feed_dict_val)
-            cost_list.append(cost)
-            acc_list.append(val_accu)
+            val_loss_list.append(cost)
+            val_acc_list.append(val_accu)
 
-            print('epochs: ', epoch, 'loss: ', loss, 'train_accu: ', 'cost: ', cost, train_accu, 'accuracy: ',  val_accu)
+            print('epochs: ', epoch, 'loss: ', loss, 'train_accu: ', train_accu, 'cost: ', cost, train_accu, 'accuracy: ',  val_accu)
             
             #Test early stopping
-            if early_stopping(acc_list, epoch, self.early_stopping):
+            if early_stopping(val_acc_list, epoch, self.early_stopping):
                 print("Early stopping")
                 break
+
+        train_info = {'train_loss': train_loss_list, 'train_acc': train_acc_list,
+            'val_loss': val_loss_list, 'val_acc': val_acc_list}
+
+        return train_info
 
 
     
@@ -171,7 +179,12 @@ class MLP(BaseModel):
             self.mask: mask,
             self.num_features_nonzero: num_features_nonzero
         }
+        t_start = time.time()
 
         accu = sess.run(self.accuracy, feed_dict=feed_dict)
 
-        return accu
+        t_end = time.time()
+
+        t_duration = t_end - t_start
+
+        return accu, t_duration

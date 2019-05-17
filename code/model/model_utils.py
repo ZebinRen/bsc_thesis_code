@@ -43,6 +43,8 @@ def early_stopping(acc_list, epochs, memory):
         return False
 
     if acc_list[-1]  < np.mean(acc_list[-(memory + 1): -1]):
+        print(acc_list[-1])
+        print(np.mean(acc_list[-(memory + 1): -1]))
         return True
     else:
         return False
