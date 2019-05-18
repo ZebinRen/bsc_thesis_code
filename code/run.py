@@ -13,6 +13,8 @@ from model.dcnn import DCNN
 from model.spectralcnn import SpectralCNN
 from model.chebnet import ChebNet
 from model.graphsage import GraphSage
+from model.graphsage_maxpool import GraphSageMaxPool
+from model.graphsage_meanpool import GraphSageMeanPool
 from hyperpara_optim import *
 import scipy.sparse as sp
 import numpy as np
@@ -25,7 +27,7 @@ test_search_hpara = False
 learning_rate = 0.001 #0.01
 epochs = 400
 weight_decay = 0.02 #5e-1
-early_stopping = 300 #500
+early_stopping = 30 #500
 activation_func = tf.nn.relu
 dropout_prob = 0.2 #0.5
 bias = True
@@ -283,10 +285,9 @@ elif model_name == 'chebnet':
 
 #Test chebnet finish
 
-#Test graphsage
+#Test graphsage mean
 elif model_name == 'graphsage':
-    degrees = np.array(undirected.sum(1))
-    undirected = create_load_sparse(undirected)
+    degrees = data['degrees']
 
     model = GraphSage(
         hidden_num = 1, hidden_dim = [hidden_dim],
@@ -308,7 +309,63 @@ elif model_name == 'graphsage':
     accu, time_used = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero, degrees)
     print('test acucracy: ', accu)
 
-#Test graphsage finish
+#Test graphsage mean finish
+
+#Test graphsage maxpool
+elif model_name == 'graphsage_maxpool':
+    degrees = data['degrees']
+    neigh_info = data['neigh_info']
+
+    model = GraphSageMaxPool(
+        hidden_num = 1, hidden_dim = [hidden_dim],
+        **addi_parameters,
+        learning_rate = learning_rate, epochs = epochs,
+        weight_decay = weight_decay, early_stopping = early_stopping,
+        activation_func = activation_func,
+        dropout_prob = dropout_prob,
+        bias = bias,
+        optimizer = optimizer,
+        name='GraphSage',
+        transform_size = [32, 24]
+    )
+
+    sess = tf.Session()
+
+    model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero, degrees, neigh_info)
+
+
+    accu, time_used = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero, degrees, neigh_info)
+    print('test acucracy: ', accu)
+#Test graphsage maxpool finish
+
+
+#Test graphsage meanpool
+elif model_name == 'graphsage_meanpool':
+    degrees = data['degrees']
+    row = data['row']
+    col = data['col']
+
+    model = GraphSageMeanPool(
+        hidden_num = 1, hidden_dim = [hidden_dim],
+        **addi_parameters,
+        learning_rate = learning_rate, epochs = epochs,
+        weight_decay = weight_decay, early_stopping = early_stopping,
+        activation_func = activation_func,
+        dropout_prob = dropout_prob,
+        bias = bias,
+        optimizer = optimizer,
+        name='GraphSage',
+        transform_size = [hidden_dim, addi_parameters['output_dim']]
+    )
+
+    sess = tf.Session()
+
+    model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero, degrees, row, col)
+
+
+    accu, time_used = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero, degrees, row, col)
+    print('test acucracy: ', accu)
+#Test graphsage meanpool finish
 
 
 else:

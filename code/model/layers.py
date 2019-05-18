@@ -697,14 +697,7 @@ class ChebLayer(BaseLayer):
 
 class MeanLayer(BaseLayer):
     '''
-    Two layer GCN
-    Semi-Supervised Classfication with Graph Convolution Networks, Kipf
-    Model:
-        Z = f(X, A) = softmax(A RELU(AXW(0))W(1))
-    A = D^-0.5 L D^-0.5 (Renomalized Laplacian)
-    X is the feature matrix
-    NOTE: There is no bias or dropout in the orgin model
-    
+    MeanLayer, used in GraphSage
     '''
     def __init__(self,
                  adjancy,
@@ -789,10 +782,10 @@ class MeanLayer(BaseLayer):
         return self.activation_func(output)
 
 
+
 class MeanPoolLayer(BaseLayer):
     '''
-    MeanPoolLayer
-    Used in graph sage
+    MeanPoolLayer, used in GraphSage
     '''
     def __init__(self,
                  adjancy,
@@ -802,7 +795,11 @@ class MeanPoolLayer(BaseLayer):
                  dropout_prob = None,
                  bias = False,
                  sparse = False,
-                 degrees = None):
+                 degrees = None,
+                 row = None,
+                 col = None,
+                 transform_size = None,
+                 num_nodes = None):
         super(MeanPoolLayer, self).__init__(
             input_dim, output_dim,
             activation_func,
@@ -814,15 +811,21 @@ class MeanPoolLayer(BaseLayer):
 
         self.adjancy = adjancy
         self.degrees = degrees
+        self.row = row
+        self.col = col
+        self.num_nodes = num_nodes
+        self.transform_size = transform_size
 
         
         #Define layers' variable
         with tf.variable_scope(self.name + '_var'):
-            self.pool_weights = glort_init([input_dim, transform_size], name = 'pool_weights')
-            self.weight_decay_vars.append(self.pool_weights)
+            self.agg_weights = glort_init([input_dim, transform_size], name = 'agg_weights')
+            self.weight_decay_vars.append(self.agg_weights)
+            self.output_weights = glort_init([transform_size, output_dim], name = 'ouptut_weights')
+            self.weight_decay_vars.append(self.output_weights)
             self.skip_weights = glort_init([self.input_dim, output_dim], name = 'skip_weights')
             self.weight_decay_vars.append(self.skip_weights)
-        
+           
         #If bias is used
             if self.bias:
                 self.bias = tf.zeros([output_dim], name = 'bias')
@@ -842,23 +845,25 @@ class MeanPoolLayer(BaseLayer):
             else:
                 inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
         
-        #Multiply it by weight matrix
+        #transform features
         if self.sparse:
-            tran_features = tf.sparse_tensor_dense_matmul(inputs, self.pool_weights)
+            trans_features = tf.sparse_tensor_dense_matmul(inputs, self.agg_weights)
         else:
-            tran_features = tf.matmul(inputs, self.pool_weights)
+            trans_features = tf.matmul(inputs, self.agg_weights)
 
-        #spread features to edges
-        edge_features = tf.gather(tran_features, neighbours_indices)
-        agg_weights = scatter_add_tensor(edge_features, self_indices, out_shape=[num_nodes, agg_transform_size])
-        agg_weights = agg_weights / degrees
+        #acitvate
+        trans_features = tf.nn.relu(trans_features)
 
-        #multiply it by adjancy matrix
-        x = tf.sparse_tensor_dense_matmul(self.adjancy, x)
+        agg_features = tf.gather(trans_features, self.row)
+        #scatter_add_tensor(agg_features, self.col, out_shape=[num_nodes, agg_transform_size])
+        col = tf.expand_dims(self.col, -1)
+        agg_features = tf.scatter_nd(col, agg_features, shape=[self.num_nodes, self.transform_size])
 
-        #Divide by degree
-        x = x/self.degrees
+        #resize
+        agg_features = agg_features/self.degrees
 
+        x = tf.matmul(agg_features, self.output_weights)
+        
 
         #Compute skipped features
         if self.sparse:
@@ -881,3 +886,99 @@ class MeanPoolLayer(BaseLayer):
         #activation
         return self.activation_func(output)
 
+class MaxPoolLayer(BaseLayer):
+    '''
+    MaxPoolLayer, used in GraphSage
+    '''
+    def __init__(self,
+                 adjancy,
+                 input_dim, output_dim,
+                 activation_func,
+                 name,
+                 dropout_prob = None,
+                 bias = False,
+                 sparse = False,
+                 degrees = None,
+                 neigh_info = None,
+                 transform_size = None):
+        super(MaxPoolLayer, self).__init__(
+            input_dim, output_dim,
+            activation_func,
+            name,
+            dropout_prob,
+            bias,
+            sparse
+            )
+
+        self.adjancy = adjancy
+        self.degrees = degrees
+        self.neigh_info = neigh_info
+        self.transform_size = transform_size
+
+        
+        #Define layers' variable
+        with tf.variable_scope(self.name + '_var'):
+            self.agg_weights = glort_init([input_dim, transform_size], name = 'agg_weights')
+            self.weight_decay_vars.append(self.agg_weights)
+            self.output_weights = glort_init([transform_size, output_dim], name = 'ouptut_weights')
+            self.weight_decay_vars.append(self.output_weights)
+            self.skip_weights = glort_init([self.input_dim, output_dim], name = 'skip_weights')
+            self.weight_decay_vars.append(self.skip_weights)
+           
+        #If bias is used
+            if self.bias:
+                self.bias = tf.zeros([output_dim], name = 'bias')
+                self.weight_decay_vars.append(self.bias)    
+    def run(self, inputs, num_features_nonzero = None):
+        '''
+        Inputs are features, Since the feateure map will change through the network
+        The symmertic normalized Laplacian matrix at the first layer
+        Then the convoluted matrix in the following layers
+        '''
+        if not self.dropout_prob:
+            pass
+
+        else:
+            if self.sparse:
+                inputs = sparse_dropout(inputs, 1 - self.dropout_prob, num_features_nonzero)
+            else:
+                inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+        
+        #transform features
+        if self.sparse:
+            trans_features = tf.sparse_tensor_dense_matmul(inputs, self.agg_weights)
+        else:
+            trans_features = tf.matmul(inputs, self.agg_weights)
+
+        #acitvate
+        trans_features = tf.nn.relu(trans_features)
+
+        #neighbours features
+        neighbours_features = tf.gather(trans_features, self.neigh_info)
+
+        #max aggregator
+        agg_features = tf.reduce_max(neighbours_features, axis=1)
+
+        #aggregated features
+        x = tf.matmul(agg_features, self.output_weights)
+
+        #Compute skipped features
+        if self.sparse:
+            skipped_features = tf.sparse_tensor_dense_matmul(inputs, self.skip_weights)
+        else:
+            skipped_features = tf.matmul(inputs, self.skip_weights)
+
+        x = x + skipped_features
+
+        if self.bias != None:
+            x += self.bias
+
+        normalizer = tf.norm(x, ord=2, axis=1, keepdims=True)
+        normalizer = tf.clip_by_value(normalizer, clip_value_min=1.0, clip_value_max=np.inf)
+        #print('###', normalizer)
+        #exit()
+        #output = x / normalizer
+        output = x
+
+        #activation
+        return self.activation_func(output)

@@ -189,5 +189,9 @@ def create_dataset(read_path, save_path, instance_num):
 
 
 if __name__ == '__main__':
-    create_dataset('../processed_data', './data', 2)
+    #Create for hyperparameter
+    create_dataset('../processed_data', './data/tune_hyper', 3)
+
+    #Create for evaluation
+    create_dataset('../processed_data', './data/evaluate', 10)
 

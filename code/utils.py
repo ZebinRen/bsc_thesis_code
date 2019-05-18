@@ -68,33 +68,7 @@ def row_normalized(mat):
 
     return mat
 
-def create_train_feed(dataset, directed = False):
-    '''
-    create the parameters for train method
-    '''
-    if directed:
-        adj = dataset['directed']
-    else:
-        adj = dataset['undirected']
 
-    features = dataset['features']
-    y_train = dataset['train_label']
-    y_val = dataset['val_label']
-    num_features_nonzero = features[1].shape
-
-    train_mask = dataset['train_mask']
-    val_mask = dataset['val_mask']
-
-    dataset = {
-        'adj': adj, 'features': features, 
-        'train_label': y_train, 
-        'val_label': y_val, 
-        'train_mask': train_mask, 
-        'val_mask': val_mask,
-        'num_features_nonzero': num_features_nonzero
-    }
-
-    return dataset
 
 def pre_GCN(directed, undirected):
     '''
@@ -163,6 +137,45 @@ def create_cheb_series(adjancy, poly_order, self_loop=True):
 
     return undirected
 
+def create_mean_pool_adj_info(adjancy):
+    '''
+    Create the neighborhood informaion for GraphSage
+    Used by mean pool
+    '''
+    adjancy = sp.coo_matrix(adjancy)
+
+    row = adjancy.row
+    col = adjancy.col
+
+    return row, col
+
+def create_neighbor_matrix(adjancy, num_nodes, maxdegree):
+    '''
+    Create the neighborhood matrix
+    '''
+    adjancy = sp.coo_matrix(adjancy)
+
+    neigh = np.zeros((num_nodes, maxdegree), dtype=np.int32)
+    loc = np.zeros((num_nodes), dtype=np.int32)
+
+    #get row and column index
+    row = adjancy.row
+    col = adjancy.col
+
+    for index in zip(row, col):
+        node = index[0]
+        value = index[1]
+        locate = loc[node]
+
+        #update neighborhood information
+        neigh[node][locate] = value 
+
+        #update location
+        loc[node] = locate + 1
+
+    return neigh
+
+
 
 
 
@@ -181,6 +194,19 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
     input_dim = features.shape[1]
     output_dim = y_train.shape[1]
 
+    #return value
+    dataset = {}
+    info = {}
+
+    #create degrees
+    binary_value = undirected.astype(np.bool)
+    binary_value = binary_value.astype(np.int32)
+    degrees = np.array(binary_value.sum(1))
+    maxdegree = np.max(degrees)
+
+    #create neigh_info, used by graphsage max pool
+    neigh_info = create_neighbor_matrix(undirected, node_num, maxdegree)
+    row, col = create_mean_pool_adj_info(undirected)
 
     #Preprocess adjancy for different models
     if 'gcn' == model_name or 'firstcheb' == model_name:
@@ -202,7 +228,15 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
         #directe, sys_norm_undirected
         pass
     elif 'graphsage' == model_name:
-        pass
+        dataset['degrees'] = degrees
+    elif 'graphsage_maxpool' == model_name:
+        info['max_degree'] = maxdegree
+        dataset['degrees'] = degrees
+        dataset['neigh_info'] = neigh_info
+    elif 'graphsage_meanpool' == model_name:
+        dataset['degrees'] = degrees
+        dataset['row'] = row
+        dataset['col'] = col
     elif 'mlp' == model_name:
         pass
     else:
@@ -221,8 +255,6 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
         pass
     elif 'chebnet' == model_name:
         pass
-    elif 'graphsage' == model_name:
-        pass
     else:
         directed = create_load_sparse(directed)
         undirected = create_load_sparse(undirected)
@@ -230,7 +262,7 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
     features = create_load_sparse(features)
 
 
-    dataset = {
+    dataset.update({
         'directed': directed,
         'undirected': undirected,
         'features': features,
@@ -240,14 +272,14 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
         'train_mask': train_mask,
         'val_mask': val_mask,
         'test_mask': test_mask
-    }
+    })
 
-    info = {
+    info.update({
         'input_dim': input_dim,
         'output_dim': output_dim,
         'node_num': node_num,
         'cate_num': output_dim
-    }
+    })
 
     return dataset, info
 
