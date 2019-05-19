@@ -271,14 +271,15 @@ class FirstChebLayer(BaseLayer):
         #acitvation
         return self.activation_func(output)
 
+'''
 class GraphAttentionLayer(BaseLayer):
-    '''
-    Graph Attention Layer
-    attention head is the number of attention heads, default = 1
-    aggregate have two values: concate, ave
-    concate will concate all the ouputs, used in hidded layers
-    and ave will average the outputs, used in the output layer
-    '''
+    #
+    #Graph Attention Layer
+    #attention head is the number of attention heads, default = 1
+    #aggregate have two values: concate, ave
+    #concate will concate all the ouputs, used in hidded layers
+    #and ave will average the outputs, used in the output layer
+  
     def __init__(self,
                  adjancy,
                  input_dim, output_dim,
@@ -328,10 +329,10 @@ class GraphAttentionLayer(BaseLayer):
             
 
     def run(self, inputs, num_features_nonzero):
-        '''
-        Inputs are features or the output passed by the previous layer
-        This will connect each layers into one compution graph
-        '''
+        #
+        #Inputs are features or the output passed by the previous layer
+        #This will connect each layers into one compution graph
+        #
 
 
         #Note, sparse drop is not implemented
@@ -428,7 +429,163 @@ class GraphAttentionLayer(BaseLayer):
 
         #acitvation
         return self.activation_func(output)
+'''
 
+
+class GraphAttentionLayer(BaseLayer):
+    #
+    #Graph Attention Layer
+    #attention head is the number of attention heads, default = 1
+    #aggregate have two values: concate, ave
+    #concate will concate all the ouputs, used in hidded layers
+    #and ave will average the outputs, used in the output layer
+  
+    def __init__(self,
+                 adjancy,
+                 input_dim, output_dim,
+                 activation_func,
+                 name,
+                 total_nodes,
+                 attention_head = 1,
+                 dropout_prob = None,
+                 bias = False,
+                 sparse = False,
+                 row = None,
+                 col = None,
+                 indices = None,
+                 num_nodes = None,
+                 aggregate_mode = 'concate'):
+        super(GraphAttentionLayer, self).__init__(
+                                            input_dim, output_dim,
+                                            activation_func,
+                                            name,
+                                            dropout_prob,
+                                            bias,
+                                            sparse
+                                            )
+
+        self.adjancy = adjancy
+        self.attention_head = attention_head
+        self.aggregate_mode = aggregate_mode
+        self.total_nodes = total_nodes
+        self.row = row
+        self.col = col
+        self.num_nodes = num_nodes
+
+        #Define layer's variables
+        #The number of weights and attention is equal to the number of attention heads
+        self.weights = []
+        self.att_i_weights = []
+        self.att_j_weights = []
+        with tf.variable_scope(self.name + '_var'): 
+            #Add weights and attention
+            for i in range(self.attention_head):
+                tmp_weight = glort_init([output_dim, input_dim], name = 'weights_' + str(i))
+                self.weights.append(tmp_weight)
+                tmp_i = tf.zeros([output_dim], name = 'attention_' + str(i))
+                tmp_j = tf.zeros([output_dim], name = 'attention_' + str(i))
+                self.att_i_weights.append(tmp_i)
+                self.att_j_weights.append(tmp_j)
+                self.weight_decay_vars.append(tmp_weight)
+                self.weight_decay_vars.append(tmp_i)
+                self.weight_decay_vars.append(tmp_j)
+
+
+            
+            #if bias is used
+            if self.bias:
+                if aggregate_mode == 'concate':
+                    self.bias = tf.zeros([output_dim*attention_head], name = 'bias')
+                elif aggregate_mode == 'ave':
+                    self.bias = tf.zeros([output_dim], name = 'bias')
+                else:
+                    raise "Invalid value for aggregate_mode"
+            
+
+    def run(self, inputs, num_features_nonzero):
+        #
+        #Inputs are features or the output passed by the previous layer
+        #This will connect each layers into one compution graph
+        #
+
+
+        #Note, sparse drop is not implemented
+        #Since we assume that no dropout is implemented and the output of a layer is dense matrix
+        #Drop out to input can be implemented befor it is feeded to the train function 
+        if not self.dropout_prob:
+            pass
+
+        else:
+            if self.sparse:
+                inputs = sparse_dropout(inputs, 1 - self.dropout_prob, num_features_nonzero)
+            else:
+                inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+
+
+        #Do the calculation
+        trans_feature = []
+        if self.sparse:
+            for i in range(self.attention_head):
+                tmp_value = tf.sparse_tensor_dense_matmul(inputs, self.weights[i])
+                trans_feature.append(tmp_value)
+
+        else:
+            #Directly compute WX_T
+            for i in range(self.attention_head):
+                WX_T.append(tf.matmul(inputs, self.weights[i]))
+
+        #Compute a_T[Wh_i||Wh_j]
+        #Note the concatention is calculted later
+        #AWX_T_1 is the front part of the multiplication
+        #AWX_T_2 is the back part of the multiplicationh
+        #each of them is a #NODE vector
+        att_i_list = []
+        att_j_list = []
+        for i in range(self.attention_head):
+            att_i_list.append(tf.matmul(trans_feature, att_i_weights[i]))
+            att_j_list.append(tf.matmul(trans_feature, att_j_weights[i]))
+
+        att_coffe_list = []
+        for i in range(self.attention_head):
+            att_coffe = tf.gather(att_i_list[i], self.row, axis=0) + \
+                        tf.gather(att_j_list[j], self.col, axis=0)
+
+            att_coffe = tf.squeeze(attention_weights_of_edges)
+            att_coffe_list.append(att_coffe)
+
+        att_coffe_mat_list = []
+        for i in range(self.attention_head):
+            att_coffe_mat = tf.SparseTensor(
+            indices=self.indeces,
+            values=tf.nn.leaky_relu(att_coffe_list[i], alpha=0.2),
+            dense_shape=(self.num_nodes, self.num_nodes)
+            )
+            atte_coffe_mat = tf.sparse_softmax(atte_coffe_mat)
+            att_coffe_mat_list.append(att_coffe_mat)
+
+
+        output = []
+        for i in range(self.attention_head):
+            cur_output = tf.sparse_tensor_dense_matmul(att_coffe_mat_list[i], trans_feature[i])
+            if self.bias != None:
+                cur_output = tf.contrib.layers.bias_add(cur_output)
+            output.append(cur_output)
+
+        if self.aggregate_mode == 'concate':
+            #Concate the matrix
+            output = tf.concat(output, axis = 1)
+
+        elif self.aggregate_mode == 'ave':
+            #Ave over output_matrix
+            len_output = len(output)
+            output = tf.add_n(output)
+            output = output/len_output
+        else:
+            raise "aggregate_mode has a invalid value"
+
+
+        #acitvation
+        return self.activation_func(output)
 
 
 

@@ -40,12 +40,18 @@ class GAT(BaseModel):
         self.placeholders['labels'] = tf.placeholder(tf.int32, shape=(self.total_nodes, self.total_cates), name='labels')
         self.placeholders['mask'] = tf.placeholder(tf.int32, shape=(self.total_nodes), name='mask')
         self.placeholders['num_features_nonzero'] = tf.placeholder(tf.int32, name='num_features_nonzero')
+        self.placeholders['row'] = tf.placeholder(tf.int32, name='row')
+        self.placeholders['col'] = tf.placeholder(tf.int32, name='col')
+        self.placeholders['indices'] = tf.placeholder(tf.int32, shape=(, 2), name='indices')
 
         self.adjancy = self.placeholders['adj']
         self.inputs = self.placeholders['features']
         self.label = self.placeholders['labels']
         self.mask = self.placeholders['mask']
         self.num_features_nonzero = self.placeholders['num_features_nonzero']
+        self.row = self.placeholders['row']
+        self.col = self.placeholders['col']
+        self.indices = self.placeholders['indices']
 
         self.optimizer = optimizer(learning_rate=self.learning_rate)
 
@@ -65,6 +71,9 @@ class GAT(BaseModel):
                 self.dropout_prob,
                 self.bias,
                 sparse = True,
+                row = self.row,
+                col = self.col,
+                indices = self.indices,
                 aggregate_mode = 'concate',
                 ))
         #Append output layer
@@ -79,6 +88,9 @@ class GAT(BaseModel):
                 self.dropout_prob,
                 self.bias,
                 sparse = False,
+                row = self.row,
+                col = self.col,
+                indices = self.indices,
                 aggregate_mode = 'ave'
                 ))
   
@@ -107,7 +119,7 @@ class GAT(BaseModel):
         return accuracy
         
 
-    def train(self, sess, adj, features, train_label, val_label, train_mask, val_mask, num_features_nonzero):
+    def train(self, sess, adj, features, train_label, val_label, train_mask, val_mask, num_features_nonzero, row, col, indices):
         '''
         Train the model
         '''
@@ -121,7 +133,10 @@ class GAT(BaseModel):
           self.inputs: features,
           self.label: train_label,
           self.mask: train_mask,
-          self.num_features_nonzero: num_features_nonzero
+          self.num_features_nonzero: num_features_nonzero,
+          self.row: row,
+          self.col: col,
+          self.indices: indices
         }
 
         feed_dict_val = {
@@ -129,7 +144,10 @@ class GAT(BaseModel):
           self.inputs: features,
           self.label: val_label,
           self.mask: val_mask,
-          self.num_features_nonzero: num_features_nonzero       
+          self.num_features_nonzero: num_features_nonzero,
+          self.row: row,
+          self.col: col,
+          self.indices: indices     
         }
 
         sess.run(tf.global_variables_initializer())
@@ -154,7 +172,7 @@ class GAT(BaseModel):
 
     
 
-    def predict(self, sess, adj, features, label, mask, num_features_nonzero):
+    def predict(self, sess, adj, features, label, mask, num_features_nonzero, row, col, indices):
         '''
         Predict, a cate-index representation will be provided
         '''
@@ -163,7 +181,10 @@ class GAT(BaseModel):
             self.inputs: features,
             self.label: label,
             self.mask: mask,
-            self.num_features_nonzero: num_features_nonzero
+            self.num_features_nonzero: num_features_nonzero,
+            self.row: row,
+            self.col: col:
+            self.indices: indices
         }
 
         outputs = sess.run(self.outputs, feed_dict=feed_dict)
@@ -172,7 +193,7 @@ class GAT(BaseModel):
 
         return cate_index
 
-    def test(self, sess, adj, features, label, mask, num_features_nonzero):
+    def test(self, sess, adj, features, label, mask, num_features_nonzero, row, col, indices):
         '''
         Test the model, return accuracy
         '''
@@ -181,7 +202,10 @@ class GAT(BaseModel):
             self.inputs: features,
             self.label: label,
             self.mask: mask,
-            self.num_features_nonzero: num_features_nonzero
+            self.num_features_nonzero: num_features_nonzero,
+            self.row: row,
+            self.col: col,
+            self.indices: indices
         }
 
         accu = sess.run(self.accuracy, feed_dict=feed_dict)
