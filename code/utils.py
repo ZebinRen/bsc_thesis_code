@@ -225,8 +225,11 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
     elif 'chebnet' == model_name:
         pass
     elif 'gat' == model_name:
-        #directe, sys_norm_undirected
-        pass
+        dataset['row'] = row
+        dataset['col'] = col
+        indices = zip(row, col)
+        indices = [ind for ind in indices]
+        dataset[indices] = indices
     elif 'graphsage' == model_name:
         dataset['degrees'] = degrees
     elif 'graphsage_maxpool' == model_name:

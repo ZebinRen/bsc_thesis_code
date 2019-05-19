@@ -42,7 +42,7 @@ class GAT(BaseModel):
         self.placeholders['num_features_nonzero'] = tf.placeholder(tf.int32, name='num_features_nonzero')
         self.placeholders['row'] = tf.placeholder(tf.int32, name='row')
         self.placeholders['col'] = tf.placeholder(tf.int32, name='col')
-        self.placeholders['indices'] = tf.placeholder(tf.int32, shape=(, 2), name='indices')
+        self.placeholders['indices'] = tf.placeholder(tf.int32, name='indices')
 
         self.adjancy = self.placeholders['adj']
         self.inputs = self.placeholders['features']
@@ -183,7 +183,7 @@ class GAT(BaseModel):
             self.mask: mask,
             self.num_features_nonzero: num_features_nonzero,
             self.row: row,
-            self.col: col:
+            self.col: col,
             self.indices: indices
         }
 

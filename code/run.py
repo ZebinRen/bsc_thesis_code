@@ -31,7 +31,7 @@ early_stopping = 30 #500
 activation_func = tf.nn.relu
 dropout_prob = 0.1 #0.5
 bias = True
-hidden_dim = 32
+hidden_dim = 16
 optimizer = tf.train.AdamOptimizer
 
 
@@ -178,6 +178,10 @@ elif model_name == 'firstcheb':
 
 #Test GAT
 elif model_name =='gat':
+    row = data['row']
+    col = data['col']
+    indices = data['indices']
+
     model = GAT(
         hidden_num = 1, hidden_dim = [hidden_dim],
         **addi_parameters,
@@ -193,10 +197,10 @@ elif model_name =='gat':
 
     sess = tf.Session()
 
-    model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
+    model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero, row, col, indices)
 
 
-    accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero)
+    accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero, row, col, indices)
     print('test acucracy: ', accu)
 
 #TEST GAT FINISH
