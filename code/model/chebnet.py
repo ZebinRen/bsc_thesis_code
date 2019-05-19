@@ -2,6 +2,7 @@ import tensorflow as tf
 from .base_model import BaseModel
 from .layers import *
 from .model_utils import *
+import time
 
 class ChebNet(BaseModel):
     def __init__(self,
@@ -188,4 +189,4 @@ class ChebNet(BaseModel):
 
         t_end = time.time()
 
-        return accu, t_strat - t_end
+        return accu, t_end - t_start

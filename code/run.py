@@ -20,16 +20,16 @@ import scipy.sparse as sp
 import numpy as np
 
 #The model name used for test
-model_name = 'graphsage'
+model_name = 'spectralcnn'
 test_search_hpara = False
 
 #Hyperparameters
-learning_rate = 0.001 #0.01
+learning_rate = 0.01 #0.01
 epochs = 400
-weight_decay = 0.02 #5e-1
+weight_decay = 0.0001 #5e-1
 early_stopping = 30 #500
 activation_func = tf.nn.relu
-dropout_prob = 0.2 #0.5
+dropout_prob = 0.1 #0.5
 bias = True
 hidden_dim = 32
 optimizer = tf.train.AdamOptimizer
@@ -229,7 +229,6 @@ elif model_name == 'dcnn':
 
 #TEST SpectralCNN
 elif model_name == 'spectralcnn':
-    undirected = undirected[1]
 
     model = SpectralCNN(
         hidden_num = 1, hidden_dim = [hidden_dim],

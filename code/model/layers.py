@@ -220,12 +220,15 @@ class FirstChebLayer(BaseLayer):
         #Define layer's variables
         with tf.variable_scope(self.name + '_var'): 
             self.weights_0 = glort_init([input_dim, output_dim], name = 'weights_0')
+            self.weight_decay_vars.append(self.weights_0)
             self.weights_1 = glort_init([input_dim, output_dim], name = 'weights_1')
+            self.weight_decay_vars.append(self.weights_1)
 
 
             #if bias is used
             if self.bias:
                 self.bias = tf.zeros([output_dim], name = 'bias')
+                self.weight_decay_vars.append(self.bias)
 
 
     def run(self, inputs, num_features_nonzero):
@@ -460,11 +463,14 @@ class DiffusionLayer(BaseLayer):
         with tf.variable_scope(self.name + '_var'): 
             self.weight_c = glort_init([self.hops, input_dim], name = 'weight_c')
             self.weight_d = glort_init([self.hops * input_dim, output_dim], name = 'weight_d')
+            self.weight_decay_vars.append(self.weight_c)
+            self.weight_decay_vars.append(self.weight_d)
 
 
             #if bias is used
             if self.bias:
                 self.bias = tf.zeros([output_dim], name = 'bias')
+                self.weight_decay_vars.append(self.bias)
 
 
     def run(self, inputs, num_features_nonzero):
@@ -518,11 +524,9 @@ class DiffusionLayer(BaseLayer):
 
 
 
-
+'''
 class SpectralCNNLayer(BaseLayer):
-    '''
-    Dense Layer
-    '''
+    #Dense Layer
     def __init__(self,
                  eigenvalue_matrix,
                  input_dim, output_dim,
@@ -560,10 +564,8 @@ class SpectralCNNLayer(BaseLayer):
 
 
     def run(self, inputs, num_features_nonzero):
-        '''
-        Inputs are features or the output passed by the previous layer
-        This will connect each layers into one compution graph
-        '''
+        #Inputs are features or the output passed by the previous layer
+        #This will connect each layers into one compution graph
 
 
         #Note, sparse drop is not implemented
@@ -604,8 +606,87 @@ class SpectralCNNLayer(BaseLayer):
 
         #acitvation
         return self.activation_func(output)
+'''
+
+class SpectralCNNLayer(BaseLayer):
+    '''
+    Dense Layer
+    '''
+    def __init__(self,
+                 eigenvalue_matrix,
+                 input_dim, output_dim,
+                 activation_func,
+                 name,
+                 dropout_prob = None,
+                 bias = False,
+                 sparse = False,
+                 total_nodes = None):
+        super(SpectralCNNLayer, self).__init__(
+                                            input_dim, output_dim,
+                                            activation_func,
+                                            name,
+                                            dropout_prob,
+                                            bias,
+                                            sparse
+                                            )
+
+        self.ei_mat = eigenvalue_matrix
+        self.total_nodes = total_nodes
+
+        #Define layer's variables
+        with tf.variable_scope(self.name + '_var'):
+            self.weights=glort_init([input_dim, output_dim], name = 'weights')
+            self.weight_decay_vars.append(self.weights)
 
 
+            #if bias is used
+            if self.bias:
+                self.bias = tf.zeros([output_dim], name = 'bias')
+                self.weight_decay_vars.append(self.bias)
+
+
+    def run(self, inputs, num_features_nonzero):
+        '''
+        Inputs are features or the output passed by the previous layer
+        This will connect each layers into one compution graph
+        '''
+
+
+        #Note, sparse drop is not implemented
+        #Since we assume that no dropout is implemented and the output of a layer is dense matrix
+        #Drop out to input can be implemented befor it is feeded to the train function 
+        if not self.dropout_prob:
+            pass
+
+        else:
+            if self.sparse:
+                inputs = sparse_dropout(inputs, 1 - self.dropout_prob, num_features_nonzero)
+            else:
+                inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
+
+
+        #Do the calculation
+        if self.sparse:
+            X_TV = tf.sparse_tensor_dense_matmul(tf.sparse.transpose(inputs), self.ei_mat)
+            V_TX = tf.transpose(X_TV)
+        else:
+            V_TX = tf.matmul(tf.transpose(self.ei_mat), inputs)
+
+        V_TXW = tf.matmul(V_TX, self.weights)
+
+        output = tf.matmul(self.ei_mat , V_TXW)
+
+        #Output shape is output_dim, total_nodes, input_dim
+        #Add over input features
+        #output_dim, total_nodes
+        #Add over total_nodes
+
+        #bias
+        if self.bias != None:
+            output += self.bias
+
+        #acitvation
+        return self.activation_func(output)
 
 
 
@@ -642,13 +723,14 @@ class ChebLayer(BaseLayer):
         self.weights_list = []
         with tf.variable_scope(self.name + '_var'):
             for i in range(self.poly_order):
-                self.weights_list.append(glort_init([self.input_dim, self.output_dim], name = 'weights' + str(i)))
-
+                tmp = glort_init([self.input_dim, self.output_dim], name = 'weights' + str(i))
+                self.weights_list.append(tmp)
+                self.weight_decay_vars.append(tmp)                    
 
             #if bias is used
             if self.bias:
                 self.bias = tf.zeros([output_dim], name = 'bias')
-
+                self.weight_decay_vars.append(self.bias)
 
     def run(self, inputs, num_features_nonzero):
         '''

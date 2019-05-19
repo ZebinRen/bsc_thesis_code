@@ -27,13 +27,13 @@ evaluate_times = 1
 train_size = 230
 val_size = 500
 
-#mlp gcn firstcheb dcnn graphsage graph_max_pool graph_mean_pool
-model_list = [GraphSageMeanPool]
-model_name_list = ['graphsage_meanpool']
+#mlp gcn firstcheb dcnn graphsage graph_max_pool graph_mean_pool spectralcnn
+model_list = [SpectralCNN]
+model_name_list = ['spectralcnn']
 
-dataset_path = './data'
+dataset_path = './data/tune_hyper'
 dataset_name = 'citeseer'
-index_list = ['0', '1']
+index_list = ['0', '1', '2']
 
 save_path = './hyperparameter'
 
