@@ -471,6 +471,7 @@ class GraphAttentionLayer(BaseLayer):
         self.row = row
         self.col = col
         self.num_nodes = num_nodes
+        self.indices = indices
 
         #Define layer's variables
         #The number of weights and attention is equal to the number of attention heads
@@ -480,10 +481,10 @@ class GraphAttentionLayer(BaseLayer):
         with tf.variable_scope(self.name + '_var'): 
             #Add weights and attention
             for i in range(self.attention_head):
-                tmp_weight = glort_init([output_dim, input_dim], name = 'weights_' + str(i))
+                tmp_weight = glort_init([self.input_dim, self.output_dim], name = 'weights_' + str(i))
                 self.weights.append(tmp_weight)
-                tmp_i = tf.zeros([output_dim], name = 'attention_' + str(i))
-                tmp_j = tf.zeros([output_dim], name = 'attention_' + str(i))
+                tmp_i = tf.zeros([output_dim, 1], name = 'attention_' + str(i))
+                tmp_j = tf.zeros([output_dim, 1], name = 'attention_' + str(i))
                 self.att_i_weights.append(tmp_i)
                 self.att_j_weights.append(tmp_j)
                 self.weight_decay_vars.append(tmp_weight)
@@ -532,7 +533,7 @@ class GraphAttentionLayer(BaseLayer):
         else:
             #Directly compute WX_T
             for i in range(self.attention_head):
-                WX_T.append(tf.matmul(inputs, self.weights[i]))
+                trans_feature.append(tf.matmul(inputs, self.weights[i]))
 
         #Compute a_T[Wh_i||Wh_j]
         #Note the concatention is calculted later
@@ -542,25 +543,30 @@ class GraphAttentionLayer(BaseLayer):
         att_i_list = []
         att_j_list = []
         for i in range(self.attention_head):
-            att_i_list.append(tf.matmul(trans_feature, att_i_weights[i]))
-            att_j_list.append(tf.matmul(trans_feature, att_j_weights[i]))
+            tmp_i = tf.matmul(trans_feature[i], self.att_i_weights[i])
+            tmp_j = tf.matmul(trans_feature[i], self.att_j_weights[i])
+            tmp_i = tf.contrib.layers.bias_add(tmp_i)
+            tmp_j = tf.contrib.layers.bias_add(tmp_j)
+            att_i_list.append(tmp_i)
+            att_j_list.append(tmp_j)
 
         att_coffe_list = []
         for i in range(self.attention_head):
             att_coffe = tf.gather(att_i_list[i], self.row, axis=0) + \
-                        tf.gather(att_j_list[j], self.col, axis=0)
+                        tf.gather(att_j_list[i], self.col, axis=0)
 
-            att_coffe = tf.squeeze(attention_weights_of_edges)
+            att_coffe = tf.squeeze(att_coffe)
             att_coffe_list.append(att_coffe)
 
         att_coffe_mat_list = []
+
         for i in range(self.attention_head):
             att_coffe_mat = tf.SparseTensor(
-            indices=self.indeces,
-            values=tf.nn.leaky_relu(att_coffe_list[i], alpha=0.2),
+            indices=self.indices,
+            values=tf.nn.leaky_relu(att_coffe_list[i], alpha=0.2), 
             dense_shape=(self.num_nodes, self.num_nodes)
             )
-            atte_coffe_mat = tf.sparse_softmax(atte_coffe_mat)
+            att_coffe_mat = tf.sparse_softmax(att_coffe_mat)
             att_coffe_mat_list.append(att_coffe_mat)
 
 

@@ -20,7 +20,7 @@ import scipy.sparse as sp
 import numpy as np
 
 #The model name used for test
-model_name = 'spectralcnn'
+model_name = 'gat'
 test_search_hpara = False
 
 #Hyperparameters
@@ -191,7 +191,7 @@ elif model_name =='gat':
         dropout_prob = dropout_prob,
         bias = bias,
         optimizer = optimizer,
-        attention_head = 1,
+        attention_head = 3,
         name='GAT'
     )
 
@@ -200,7 +200,7 @@ elif model_name =='gat':
     model.train(sess, directed, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero, row, col, indices)
 
 
-    accu = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero, row, col, indices)
+    accu, _ = model.test(sess, directed, features, y_test, test_mask, num_featuers_nonzero, row, col, indices)
     print('test acucracy: ', accu)
 
 #TEST GAT FINISH

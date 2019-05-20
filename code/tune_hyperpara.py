@@ -28,12 +28,14 @@ train_size = 230
 val_size = 500
 
 #mlp gcn firstcheb dcnn graphsage graph_max_pool graph_mean_pool spectralcnn
-model_list = [SpectralCNN]
-model_name_list = ['spectralcnn']
+model_list = [MLP, GCN, FirstCheb, DCNN, GraphSage, GraphSageMaxPool, GraphSageMeanPool, GAT, SpectralCNN]
+model_name_list = ['mlp', 'gcn', 'firstcheb', 'dcnn', 'graphsage', 'graphsage_maxpool', 
+				 'graphsage_meanpool', 'gat', 'spectralcnn']
 
 dataset_path = './data/tune_hyper'
 dataset_name = 'citeseer'
-index_list = ['0', '1', '2']
+#index_list = ['0', '1', '2']
+index_list = ['0']
 
 save_path = './hyperparameter'
 
@@ -41,9 +43,11 @@ save_path = './hyperparameter'
 #Additional parameters
 dcnn_addi_parameter = {'hops': 3}
 
-#Additional parameters
+
 graphsage_meanpool_addi_parameter = {'transform_size': [32, 32]}
 graphsage_maxpool_addi_parameter = {'transform_size': [32, 32]}
+
+gat_addi_parameter = {'attention_head': 3}
 
 for i in range(len(model_list)):
     #Get model and model name
@@ -69,6 +73,8 @@ for i in range(len(model_list)):
     	addi_parameter.update(graphsage_meanpool_addi_parameter)
     elif model_name == 'graphsage_maxpool':
     	addi_parameter.update(graphsage_maxpool_addi_parameter)
+    elif model_name == 'gat':
+    	addi_parameter.update(gat_addi_parameter)
 
     #Random search and save parameters
     rand_set, rand_accu = random_search(model, data_feed_train, data_feed_val, search_parameter, fixed_parameter, 
@@ -78,7 +84,7 @@ for i in range(len(model_list)):
     pkl.dump((rand_set, rand_accu), random_search_file)
     random_search_file.close()
 
-    
+    '''
     #Dense search and save parameters
     dense_set, dense_accu = desne_search(model, rand_set, rand_accu, data_feed_train, data_feed_val, search_parameter, 
     	{}, {})
@@ -86,7 +92,7 @@ for i in range(len(model_list)):
     dense_search_file = open(os.path.join(save_path, model_name+'_'+'dense'), 'wb')
     pkl.dump((dense_set, dense_accu), dense_search_file)
     dense_search_file.close()
-    
+    '''
     
 
     

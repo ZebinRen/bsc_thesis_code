@@ -157,6 +157,10 @@ def create_train_feed(ori_dataset, model_name, directed = False):
     elif 'graphsage_maxpool' == model_name:
         dataset['degrees'] = ori_dataset['degrees']
         dataset['neigh_info'] = ori_dataset['neigh_info']
+    elif 'gat' == model_name:
+        dataset['row'] = ori_dataset['row']
+        dataset['col'] = ori_dataset['col']
+        dataset['indices'] = ori_dataset['indices']
 
     return dataset
 
@@ -193,5 +197,9 @@ def create_test_feed(ori_dataset, model_name, directed = False):
     elif 'graphsage_maxpool' == model_name:
         dataset['degrees'] = ori_dataset['degrees']
         dataset['neigh_info'] = ori_dataset['neigh_info']
+    elif 'gat' == model_name:
+        dataset['row'] = ori_dataset['row']
+        dataset['col'] = ori_dataset['col']
+        dataset['indices'] = ori_dataset['indices']
 
     return dataset

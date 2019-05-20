@@ -2,6 +2,7 @@ import tensorflow as tf
 from .base_model import BaseModel
 from .layers import *
 from .model_utils import *
+import time 
 
 class GAT(BaseModel):
     def __init__(self,
@@ -42,7 +43,7 @@ class GAT(BaseModel):
         self.placeholders['num_features_nonzero'] = tf.placeholder(tf.int32, name='num_features_nonzero')
         self.placeholders['row'] = tf.placeholder(tf.int32, name='row')
         self.placeholders['col'] = tf.placeholder(tf.int32, name='col')
-        self.placeholders['indices'] = tf.placeholder(tf.int32, name='indices')
+        self.placeholders['indices'] = tf.placeholder(tf.int64, name='indices')
 
         self.adjancy = self.placeholders['adj']
         self.inputs = self.placeholders['features']
@@ -75,6 +76,7 @@ class GAT(BaseModel):
                 col = self.col,
                 indices = self.indices,
                 aggregate_mode = 'concate',
+                num_nodes = self.total_nodes
                 ))
         #Append output layer
         self.layers.append(
@@ -91,7 +93,8 @@ class GAT(BaseModel):
                 row = self.row,
                 col = self.col,
                 indices = self.indices,
-                aggregate_mode = 'ave'
+                aggregate_mode = 'ave',
+                num_nodes = self.total_nodes
                 ))
   
     def _loss(self):
@@ -197,6 +200,8 @@ class GAT(BaseModel):
         '''
         Test the model, return accuracy
         '''
+        t_start = time.time()
+
         feed_dict = {
             self.adjancy: adj, 
             self.inputs: features,
@@ -210,4 +215,6 @@ class GAT(BaseModel):
 
         accu = sess.run(self.accuracy, feed_dict=feed_dict)
 
-        return accu
+        t_end = time.time()
+
+        return accu, t_end - t_start
