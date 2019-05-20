@@ -20,7 +20,7 @@ import scipy.sparse as sp
 import numpy as np
 
 #The model name used for test
-model_name = 'gat'
+model_name = 'dcnn'
 test_search_hpara = False
 
 #Hyperparameters
@@ -226,7 +226,7 @@ elif model_name == 'dcnn':
     model.train(sess, undirected, features, y_train, y_val, train_mask, val_mask, num_featuers_nonzero)
 
 
-    accum, time_used = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
+    accu, time_used = model.test(sess, undirected, features, y_test, test_mask, num_featuers_nonzero)
     print('test acucracy: ', accu)
 
 #TEST DCNN FINISHED

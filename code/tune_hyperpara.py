@@ -21,21 +21,25 @@ from model.graphsage_meanpool import GraphSageMeanPool
 from model.graphsage_maxpool import GraphSageMaxPool
 
 #Some parameters for tuning hyperparameters
-random_times = 1
-evaluate_times = 1
+random_times = 30
+evaluate_times = 3
 
 train_size = 230
 val_size = 500
 
+'''
 #mlp gcn firstcheb dcnn graphsage graph_max_pool graph_mean_pool spectralcnn
 model_list = [MLP, GCN, FirstCheb, DCNN, GraphSage, GraphSageMaxPool, GraphSageMeanPool, GAT, SpectralCNN]
 model_name_list = ['mlp', 'gcn', 'firstcheb', 'dcnn', 'graphsage', 'graphsage_maxpool', 
 				 'graphsage_meanpool', 'gat', 'spectralcnn']
+'''
+model_list = [GCN]
+model_name_list = ['gcn']
 
 dataset_path = './data/tune_hyper'
 dataset_name = 'citeseer'
-#index_list = ['0', '1', '2']
-index_list = ['0']
+index_list = ['0', '1', '2']
+#index_list = ['0']
 
 save_path = './hyperparameter'
 
@@ -84,15 +88,15 @@ for i in range(len(model_list)):
     pkl.dump((rand_set, rand_accu), random_search_file)
     random_search_file.close()
 
-    '''
+    
     #Dense search and save parameters
     dense_set, dense_accu = desne_search(model, rand_set, rand_accu, data_feed_train, data_feed_val, search_parameter, 
-    	{}, {})
+    	{}, {}, evaluate_times)
 
     dense_search_file = open(os.path.join(save_path, model_name+'_'+'dense'), 'wb')
     pkl.dump((dense_set, dense_accu), dense_search_file)
     dense_search_file.close()
-    '''
+    
     
 
     
