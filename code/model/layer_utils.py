@@ -32,8 +32,6 @@ def graph_conv(X, A, weights, X_is_sparse = False):
     Return: AXW
 
     '''
-    print(X.shape)
-    print(weights.shape)
     if X_is_sparse:
         XW = tf.sparse_tensor_dense_matmul(X, weights)
     else: 
@@ -76,8 +74,6 @@ def create_power_series(a, degree, sparse = False):
 
     if sparse:
         #If the matrix is sparse matrix, convert it to dense matrix
-        print(a)
-        print(a.dense_shape)
         #exit()
         a = tf.sparse_to_dense(a.indices, a.dense_shape, a.values, validate_indices=False)
 
