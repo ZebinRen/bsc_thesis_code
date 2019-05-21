@@ -38,4 +38,3 @@ def plot_train(train_loss, train_acc, val_loss, val_acc, path, name, save = Fals
     else:
         plt.show()
     
-
