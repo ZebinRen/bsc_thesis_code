@@ -17,8 +17,8 @@ fixed_parameter = {
     'epochs': 500,
     'bias': True,
     'name': 'Search',
-    'activation_func':  [tf.nn.relu],
-    'optimizer': [tf.train.AdamOptimizer]
+    'activation_func':  tf.nn.relu,
+    'optimizer': tf.train.AdamOptimizer
 }
 
 

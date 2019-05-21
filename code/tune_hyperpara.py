@@ -33,8 +33,8 @@ model_list = [MLP, GCN, FirstCheb, DCNN, GraphSage, GraphSageMaxPool, GraphSageM
 model_name_list = ['mlp', 'gcn', 'firstcheb', 'dcnn', 'graphsage', 'graphsage_maxpool', 
 				 'graphsage_meanpool', 'gat', 'spectralcnn']
 '''
-model_list = [GCN]
-model_name_list = ['gcn']
+model_list = [GAT]
+model_name_list = ['gat']
 
 dataset_path = './data/tune_hyper'
 dataset_name = 'citeseer'
@@ -88,7 +88,7 @@ for i in range(len(model_list)):
     pkl.dump((rand_set, rand_accu), random_search_file)
     random_search_file.close()
 
-    
+    '''
     #Dense search and save parameters
     dense_set, dense_accu = desne_search(model, rand_set, rand_accu, data_feed_train, data_feed_val, search_parameter, 
     	{}, {}, evaluate_times)
@@ -96,7 +96,7 @@ for i in range(len(model_list)):
     dense_search_file = open(os.path.join(save_path, model_name+'_'+'dense'), 'wb')
     pkl.dump((dense_set, dense_accu), dense_search_file)
     dense_search_file.close()
-    
+    '''
     
 
     
