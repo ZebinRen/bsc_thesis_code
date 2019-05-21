@@ -90,7 +90,7 @@ def load_evaluate_dataset(model_name, dataset_path, dataset_name, index_list, tr
 
 def evaluate_model(model, model_name, dataset_path, dataset_name, dataset_numbers, 
     parameter_path, parameter_appendix, result_path, evaluate_times,
-    train_size, val_size):
+    train_size, val_size, save = False):
     '''
     model: The model class
     model_name: name of the model,
@@ -122,11 +122,12 @@ def evaluate_model(model, model_name, dataset_path, dataset_name, dataset_number
         parameters, train_dataset_list, test_dataset_list, evaluate_times)
 
     #save the result to file
-    result_file_name = model_name + '_' + 'result'
-    result_file = open(os.path.join(result_path, result_file_name), 'wb')
-    pkl.dump((train_info_list, accu_list, time_list), result_file)
+    if save:
+        result_file_name = model_name + '_' + 'result'
+        result_file = open(os.path.join(result_path, result_file_name), 'wb')
+        pkl.dump((train_info_list, accu_list, time_list), result_file)
 
-    result_file.close()
+        result_file.close()
 
     return train_info_list, accu_list, time_list
 
