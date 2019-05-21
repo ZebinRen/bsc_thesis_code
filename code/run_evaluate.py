@@ -26,9 +26,9 @@ processed_result_path/dataset_name/: processed data
 '''
 
 #Model done
-#MLP
-model_list = [MLP]
-model_name_list = ['mlp']
+#MLP GCN
+model_list = [FirstCheb]
+model_name_list = ['firstcheb']
 
 dataset_name_list = ['citeseer', 'cora', 'pubmed']
 dataset_numbers = 10

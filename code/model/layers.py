@@ -827,7 +827,6 @@ class SpectralCNNLayer(BaseLayer):
             else:
                 inputs = tf.nn.dropout(inputs, 1 - self.dropout_prob)
 
-
         #Do the calculation
         if self.sparse:
             X_TV = tf.sparse_tensor_dense_matmul(tf.sparse.transpose(inputs), self.ei_mat)
