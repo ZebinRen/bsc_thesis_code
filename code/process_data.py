@@ -1,6 +1,9 @@
 import pickle as pkl
 import numpy as np
 
+def pad_list(ori_list, pad_number, length):
+	
+
 def process_output(train_info_list, acc_list, time_list):
 	'''
 	process the output data
@@ -34,7 +37,22 @@ def process_output(train_info_list, acc_list, time_list):
 	max_vloss = 0
 	max_vacc = 0
 
-	#
+	for dataset_train_info in train_info_list:
+		for item in dataset_train_info:
+			t_loss.append(item['train_loss'])
+			t_acc.append(item['train_acc'])
+			v_loss.append(item['val_loss'])
+			v_acc.append(item['val_acc'])
+			if max_tloss < len(t_loss[-1]):
+				max_tloss = len(t_loss[-1])
+			if max_tacc < len(t_acc[-1]):
+				max_tacc = len(t_acc[-1])
+			if max_vloss < len(v_loss[-1]):
+				max_vloss = len(v_loss[-1])
+			if mac_vacc < len(v_acc[-1]):
+				mac_vacc = len(v_acc[-1])
+
+
 	#compute accuracy and time 
 	eva_time = len(acc_list[0])
 
