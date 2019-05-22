@@ -31,10 +31,11 @@ processed_result_path/dataset_name/: processed data
 #MLP GCN FirstCheb GAT 
 #Model left
 #SpectralCNN, DCNN, GraphSage, 
-model_list = [GraphSageMeanPool]
-model_name_list = ['graphsage_meanpool']
+model_list = [DCNN]
+model_name_list = ['dcnn']
 
-dataset_name_list = ['citeseer', 'cora', 'pubmed']
+dataset_name_list = ['pubmed']
+#dataset_name_list = ['citeseer', 'cora', 'pubmed']
 dataset_numbers = 10
 parameter_appendix_list = ['rand']
 

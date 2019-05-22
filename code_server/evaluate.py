@@ -111,6 +111,10 @@ def evaluate_model(model, model_name, dataset_path, dataset_name, dataset_number
     parameters = pkl.load(para_file)[0]
     para_file.close()
 
+    #add
+    if model_name == 'dcnn' and dataset_name == 'pubmed':
+        parameters.update({'hops': 2})
+
     #Read train data
     train_dataset_list, test_dataset_list, addi_parameter = load_evaluate_dataset(model_name, 
         dataset_path, dataset_name, dataset_index_list, train_size, val_size)

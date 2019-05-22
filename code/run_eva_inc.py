@@ -24,13 +24,14 @@ from draw import *
 
 import os
 
-model_list = [FirstCheb]
-model_name_list = ['firstcheb']
+model_list = [GCN]
+model_name_list = ['gcn']
 
-train_size_list = [20, 40, 60, 100, 140, 180, 220, 260, 300, 400, 500, 600, 800, 1000, 1200, 1400]
+train_size_list = [100, 200]
+#train_size_list = [20, 40, 60, 100, 140, 180, 220, 260, 300, 400, 500, 600, 800, 1000, 1200, 1400]
 
 dataset_name = 'citeseer'
-dataset_numbers = 10
+dataset_numbers = 3
 parameter_appendix = 'rand'
 
 dataset_path = './data/evaluate'
@@ -49,7 +50,7 @@ for model, model_name in zip(model_list, model_name_list):
             parameter_appendix, result_path, evaluate_times, train_size, val_size)
 
         #save to file
-        save_path = result_path + '_' + model_name
+        save_path = os.path.join(result_path, model_name)
         file_name = model_name + parameter_appendix + '_' + str(train_size) 
         #make directory
         if not os.path.exists(save_path):
@@ -63,7 +64,7 @@ for model, model_name in zip(model_list, model_name_list):
         train_info, acc, time = process_output(train_info_list, acc_list, time_list)
 
         #save processed data
-        save_path = processed_result_path + '_' + model_name
+        save_path = os.path.join(processed_result_path, model_name)
         file_name = model_name + parameter_appendix + '_' + str(train_size)
 
 
@@ -79,8 +80,8 @@ for model, model_name in zip(model_list, model_name_list):
         global_acc_list.append(acc)
 
     #Save the global_acc_list
-    save_path = processed_result_path + '_global'
-    file_name = dataset_name
+    save_path = os.path.join(processed_result_path, 'global')
+    file_name = model_name
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
@@ -89,7 +90,7 @@ for model, model_name in zip(model_list, model_name_list):
     pkl.dump(global_acc_list, save_file)
     save_file.close()
 
-    file_name = dataset_name + '.txt'
+    file_name = model_name + '.txt'
     save_file = open(os.path.join(save_path, file_name), 'w')
     save_file.writelines(['size, accuracy, accuracy_std'])
 
