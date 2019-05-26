@@ -57,6 +57,8 @@ def create_raw_input(path, dataset_name, index, train_num, val_num, test_num = N
     If test_num is None, then the sizeof test_num is calcualte automatically
     '''
     #Read data
+    #print(train_num)
+    #exit()
     data_dict = load_data(path, dataset_name, index)
 
     #Get the number of nodes and the number of cates
@@ -89,6 +91,8 @@ def create_raw_input(path, dataset_name, index, train_num, val_num, test_num = N
     train_mask = create_mask(index_train, node_num)
     val_mask = create_mask(index_val, node_num)
     test_mask = create_mask(index_test, node_num)
+    #print(train_num)
+    #exit()
 
     #Create train/val/test labels
     y_train = np.zeros((node_num, cate_num))

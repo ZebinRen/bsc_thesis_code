@@ -184,7 +184,9 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
     This will create the input that can be directly feed to the neural network
     '''
     directed, undirected, features, y_train, y_val, y_test, train_mask, val_mask, test_mask,\
-    info = create_raw_input(path, dataset_name, index, 230, 500, None)
+    info = create_raw_input(path, dataset_name, index, train_num, 500, None)
+    #print(train_mask)
+    #exit()
 
     #preprocess features
     norm_features = row_normalized(features)
@@ -283,6 +285,7 @@ def create_input(model_name, path, dataset_name, index, train_num, val_num, test
         'node_num': node_num,
         'cate_num': output_dim
     })
+
 
     return dataset, info
 

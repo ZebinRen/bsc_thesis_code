@@ -20,7 +20,7 @@ import scipy.sparse as sp
 import numpy as np
 
 #The model name used for test
-model_name = 'dcnn'
+model_name = 'gcn'
 test_search_hpara = False
 
 #Hyperparameters
@@ -38,7 +38,8 @@ optimizer = tf.train.AdamOptimizer
 #hyperparameter for ChebNet 
 poly_order = 2
 
-
+#train size
+train_size = 10
 
 #load data
 data, addi_parameters = create_input(model_name, './data', 'citeseer', '0', 230, 500, None)
@@ -52,7 +53,6 @@ train_mask = data['train_mask']
 val_mask = data['val_mask']
 test_mask = data['test_mask']
 num_featuers_nonzero = features[1].shape
-
 
 
 

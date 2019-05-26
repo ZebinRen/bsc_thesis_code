@@ -7,7 +7,9 @@ data_inc_path = './processed_inc_output'
 
 cur_line = ''
 
+train_size_list = [40, 60, 100, 140, 180, 220, 260, 300, 400, 500, 600, 800, 1000, 1200, 1400]
 
+'''
 write_file_path = os.path.join(data_path, 'global')
 write_file_name = 'result'
 w = open(os.path.join(write_file_path, write_file_name), 'w+')
@@ -36,4 +38,21 @@ for model_name in ['mlp', 'gcn', 'gat', 'dcnn', 'spectralcnn', 'graphsage', 'gra
 	w.write(cur_line + '\n')
 
 w.close()
+'''
 
+
+
+for model_name in ['mlp', 'gcn', 'gat', 'spectralcnn', 'graphsage', 'graphsage_meanpool', 'graphsage_maxpool', 'firstcheb']:
+	cur_line = model_name
+
+	write_file_path = os.path.join(data_inc_path, 'global')
+	write_file_name = str(model_name + '.txt')
+	w = open(os.path.join(write_file_path, write_file_name), 'w+')
+
+	for train_size in train_size_list:
+		f = open(os.path.join(data_inc_path, model_name, model_name + 'rand' + '_' + str(train_size)), 'rb')
+		_, acc, time = pkl.load(f)
+
+		w.write(str(train_size) + ',' + str(acc)+ '\n')
+
+	w.close()
